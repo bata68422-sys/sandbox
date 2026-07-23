@@ -304,6 +304,7 @@
     <div id="mp-status" style="font-size:10px;color:#666;text-align:center;margin-top:2px">offline</div>
   </div>
 
+  <button id="pause-btn" style="padding:8px;background:#1a1a2a;border:1px solid #442266;border-radius:6px;color:#aa88dd;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:4px;transition:all 0.2s;">Pause (Space)</button>
   <button id="clear-btn">Clear All</button>
   <div id="fps-counter">-- FPS</div>
 </div>
@@ -351,6 +352,7 @@ let speed = 1.0;
 let updateAccum = 0;
 const MAX_STEPS_PER_FRAME = 4;
 let explosionFlash = { timer: 0, x: 0, y: 0 };
+let paused = false;
 
 // ----- Grid -----
 let grid = [];
@@ -2026,7 +2028,7 @@ function gameLoop(timestamp) {
   }
 
   updateAccum += speed;
-  const steps = Math.min(Math.floor(updateAccum), MAX_STEPS_PER_FRAME);
+  const steps = paused ? 0 : Math.min(Math.floor(updateAccum), MAX_STEPS_PER_FRAME);
   updateAccum -= steps;
   for (let s = 0; s < steps; s++) {
     runUpdatePass();
@@ -2137,6 +2139,21 @@ placeAtMouse = function(mx, my) {
   spawnBrushAt(mx, my, selectedElement);
   syncPlace(mx, my, selectedElement);
 };
+
+// Pause controls
+document.getElementById('pause-btn').addEventListener('click', () => {
+  paused = !paused;
+  if (!paused) updateAccum = 0;
+  document.getElementById('pause-btn').style.borderColor = paused ? '#8844aa' : '#442266';
+  document.getElementById('pause-btn').style.color = paused ? '#cc88ff' : '#aa88dd';
+  document.getElementById('pause-btn').textContent = paused ? 'Resume (Space)' : 'Pause (Space)';
+});
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    document.getElementById('pause-btn').click();
+  }
+});
 
 // ----- Start -----
 initGrid();
