@@ -1033,6 +1033,46 @@ function updateCell(x, y, cell) {
     case 'battery': {
       cell.powered = true;
       cell.life = 5;
+
+      // Explode when hot or adjacent to fire
+      const bDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      let bTrig = cell.temp > 200;
+      if (!bTrig) {
+        for (const [dx, dy] of bDirs) {
+          const n = getCell(x + dx, y + dy);
+          if (n && (n.type === 'fire' || (n.type === 'fuse' && n.lit))) {
+            bTrig = true; break;
+          }
+        }
+      }
+      if (bTrig) {
+        const R = 4;
+        for (let dx = -R; dx <= R; dx++) {
+          for (let dy = -R; dy <= R; dy++) {
+            if (dx === 0 && dy === 0) continue;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > R) continue;
+            const nx = x + dx, ny = y + dy;
+            if (!inBounds(nx, ny)) continue;
+            const t = grid[ny][nx];
+            if (t === null && Math.random() < 0.6) {
+              const life = 50 + Math.floor(Math.random() * 40);
+              setCell(nx, ny, { type: 'fire', seed: Math.random() * 256 | 0, maxLife: life, life: life, temp: 700 });
+            } else if (t !== null) {
+              t.temp = (t.temp || 0) + 400;
+              if (t.type === 'sand' || t.type === 'gunpowder' || t.type === 'wood') {
+                setCell(nx, ny, { type: 'fire', seed: Math.random() * 256 | 0, maxLife: 40 + Math.random() * 30 | 0, life: 40 + Math.random() * 30 | 0, temp: 600 });
+              }
+            }
+          }
+        }
+        addShrapnel(x, y, 4, 10, 500, 25, 50);
+        blastPush(x, y, 7, 4, 0.5);
+        blastUpward(x, y, 4);
+        collapseWake(x, y, 4);
+        setCell(x, y, null);
+        return;
+      }
       break;
     }
 
