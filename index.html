@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sandbox</title>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -2082,14 +2082,22 @@ function syncPlace(mx, my, element) {
 }
 
 document.getElementById('host-btn').addEventListener('click', () => {
+  mpStatus.textContent = 'Connecting...';
+  mpStatus.style.color = '#aa8';
   peer = new Peer();
   peer.on('open', (id) => {
     peerId = id;
     mpStatus.textContent = 'ID: ' + id;
     mpStatus.style.color = '#4f4';
   });
+  peer.on('error', (err) => {
+    mpStatus.textContent = 'Error: ' + err.type;
+    mpStatus.style.color = '#f44';
+    console.error('Peer error:', err);
+  });
   peer.on('connection', (c) => {
     conn = c;
+    mpStatus.textContent = 'Player joined!';
     conn.on('open', () => {
       mpStatus.textContent = 'Connected!';
       mpStatus.style.color = '#4f4';
@@ -2097,10 +2105,12 @@ document.getElementById('host-btn').addEventListener('click', () => {
       conn.send(JSON.stringify({ type: 'sync', data: getGridData() }));
     });
     conn.on('data', (raw) => {
-      const msg = JSON.parse(raw);
-      if (msg.type === 'place') {
-        spawnBrushAt(msg.mx, msg.my, msg.element);
-      }
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.type === 'place') {
+          spawnBrushAt(msg.mx, msg.my, msg.element);
+        }
+      } catch(e) {}
     });
     conn.on('close', () => { mpStatus.textContent = 'Disconnected'; mpStatus.style.color = '#644'; });
   });
@@ -2109,6 +2119,8 @@ document.getElementById('host-btn').addEventListener('click', () => {
 document.getElementById('join-btn').addEventListener('click', () => {
   const id = prompt('Enter host Peer ID:');
   if (!id) return;
+  mpStatus.textContent = 'Connecting...';
+  mpStatus.style.color = '#aa8';
   peer = new Peer();
   peer.on('open', () => {
     conn = peer.connect(id);
@@ -2117,14 +2129,22 @@ document.getElementById('join-btn').addEventListener('click', () => {
       mpStatus.style.color = '#4f4';
     });
     conn.on('data', (raw) => {
-      const msg = JSON.parse(raw);
-      if (msg.type === 'sync') {
-        loadGridData(msg.data);
-      } else if (msg.type === 'place') {
-        spawnBrushAt(msg.mx, msg.my, msg.element);
-      }
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.type === 'sync') {
+          loadGridData(msg.data);
+        } else if (msg.type === 'place') {
+          spawnBrushAt(msg.mx, msg.my, msg.element);
+        }
+      } catch(e) {}
     });
     conn.on('close', () => { mpStatus.textContent = 'Disconnected'; mpStatus.style.color = '#644'; });
+    conn.on('error', (err) => { mpStatus.textContent = 'Conn error'; console.error(err); });
+  });
+  peer.on('error', (err) => {
+    mpStatus.textContent = 'Error: ' + err.type;
+    mpStatus.style.color = '#f44';
+    console.error('Peer error:', err);
   });
 });
 
