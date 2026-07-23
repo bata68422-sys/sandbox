@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sandbox</title>
 <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -2061,7 +2060,7 @@ function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
 }
 
-// ----- Multiplayer (simple-peer + lz-string URL exchange) -----
+// ----- Multiplayer (simple-peer + URL exchange) -----
 let mpPeer = null;
 let mpRole = null; // 'host' or 'join'
 let mpConnected = false;
@@ -2077,13 +2076,30 @@ function mpLog(msg, color) {
   if (color) mpStatus.style.color = color;
 }
 
+// Signal encoding — base64 + encodeURIComponent, works everywhere
+function sigEncode(obj) {
+  var json = JSON.stringify(obj);
+  var encoded = encodeURIComponent(json);
+  return btoa(encoded);
+}
+function sigDecode(str) {
+  try {
+    var decoded = atob(str);
+    var json = decodeURIComponent(decoded);
+    return JSON.parse(json);
+  } catch(e) {
+    mpLog('Decode error: ' + e.message, '#f44');
+    throw e;
+  }
+}
+
 function getGridData() {
-  const data = [];
-  for (let y = 0; y < ROWS; y++) {
-    for (let x = 0; x < COLS; x++) {
+  var data = [];
+  for (var y = 0; y < ROWS; y++) {
+    for (var x = 0; x < COLS; x++) {
       if (grid[y][x]) {
-        const c = grid[y][x];
-        data.push({ x, y, type: c.type, seed: c.seed, temp: c.temp || 0,
+        var c = grid[y][x];
+        data.push({ x: x, y: y, type: c.type, seed: c.seed, temp: c.temp || 0,
           powered: !!c.powered, life: c.life || 0, active: !!c.active,
           dir: c.dir || 0, extended: !!c.extended, lit: !!c.lit, burning: !!c.burning,
           pressure: c.pressure || 0 });
@@ -2094,9 +2110,10 @@ function getGridData() {
 }
 
 function loadGridData(data) {
-  for (const d of data) {
+  for (var i = 0; i < data.length; i++) {
+    var d = data[i];
     if (inBounds(d.x, d.y)) {
-      const cell = { type: d.type, seed: d.seed || Math.random()*256|0, temp: d.temp || 0 };
+      var cell = { type: d.type, seed: d.seed || Math.random()*256|0, temp: d.temp || 0 };
       if (d.type === 'battery' || d.type === 'wire' || d.type === 'switch' || d.type === 'led' || d.type === 'heater' || d.type === 'steamgen' || d.type === 'turbine' || d.type === 'piston' || d.type === 'sensor') {
         cell.powered = !!d.powered; cell.life = d.life || 0;
       }
@@ -2110,7 +2127,7 @@ function loadGridData(data) {
 
 function sendMP(msg) {
   if (mpPeer && mpPeer.connected) {
-    try { mpPeer.send(JSON.stringify(msg)); } catch(e) {}
+    try { mpPeer.send(JSON.stringify(msg)); } catch(e) { console.error(e); }
   }
 }
 
@@ -2121,145 +2138,194 @@ function mpCleanup() {
 
 function makeMP(isInitiator, signalData) {
   if (mpPeer) mpCleanup();
-  mpPeer = new SimplePeer({ initiator: isInitiator, trickle: false,
-    config: { iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun3.l.google.com:19302' }
-    ]}
-  });
-  mpPeer.on('signal', (data) => {
-    const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(data));
-    if (isInitiator) {
-      const url = location.origin + location.pathname + '#s=' + compressed;
-      location.hash = 's=' + compressed;
-      mpLog('Your link (send to friend):', '#4f4');
-      mpLinkInput.value = url;
-      mpLinkInput.style.display = 'block';
-      mpCopyBtn.style.display = 'block';
-      try { navigator.clipboard.writeText(url); } catch(e) {}
-    } else {
-      const url = location.origin + location.pathname + '#a=' + compressed;
-      location.hash = 'a=' + compressed;
-      mpLog('Send this link back to host:', '#4f4');
-      mpLinkInput.value = url;
-      mpLinkInput.style.display = 'block';
-      mpCopyBtn.style.display = 'block';
-      try { navigator.clipboard.writeText(url); } catch(e) {}
+  mpLog(isInitiator ? 'Generating signal...' : 'Processing signal...', '#aa8');
+  try {
+    mpPeer = new SimplePeer({ initiator: isInitiator, trickle: false,
+      config: { iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]}
+    });
+  } catch(e) {
+    mpLog('WebRTC error: ' + e.message, '#f44');
+    console.error(e);
+    return;
+  }
+  mpPeer.on('signal', function(data) {
+    try {
+      var compressed = sigEncode(data);
+      if (isInitiator) {
+        var url = location.origin + location.pathname + '#s=' + compressed;
+        location.hash = 's=' + compressed;
+        mpLog('Send this link to your friend!', '#4f4');
+        mpLinkInput.value = url;
+        mpLinkInput.style.display = 'block';
+        mpCopyBtn.style.display = 'block';
+        try { navigator.clipboard.writeText(url); } catch(e) {}
+      } else {
+        var url = location.origin + location.pathname + '#a=' + compressed;
+        location.hash = 'a=' + compressed;
+        mpLog('Send this link BACK to the host!', '#4f4');
+        mpLinkInput.value = url;
+        mpLinkInput.style.display = 'block';
+        mpCopyBtn.style.display = 'block';
+        try { navigator.clipboard.writeText(url); } catch(e) {}
+      }
+    } catch(e) {
+      mpLog('Signal encode error: ' + e.message, '#f44');
+      console.error(e);
     }
   });
-  mpPeer.on('connect', () => {
+  mpPeer.on('connect', function() {
     mpConnected = true;
     mpLog('Connected!', '#4f4');
     mpLinkInput.style.display = 'none';
     mpCopyBtn.style.display = 'none';
-    document.getElementById('mp-connect-btn').style.display = 'none';
-    if (mpRole === 'host') sendMP({ type: 'sync', data: getGridData() });
+    mpConnectBtn.style.display = 'none';
+    if (mpRole === 'host') {
+      setTimeout(function() { sendMP({ type: 'sync', data: getGridData() }); }, 100);
+    }
   });
-  mpPeer.on('data', (raw) => {
+  mpPeer.on('data', function(raw) {
     try {
-      const d = JSON.parse(raw);
-      if (d.type === 'sync' && mpRole === 'join') { loadGridData(d.data); return; }
+      var d = JSON.parse(raw);
+      if (d.type === 'sync' && mpRole === 'join') { loadGridData(d.data); mpLog('World loaded!', '#4f4'); return; }
       if (d.type === 'place') { spawnBrushAt(d.mx, d.my, d.element); return; }
       if (d.type === 'cursor') { friendCursor = { x: d.mx, y: d.my }; friendCursorTimer = 60; return; }
-    } catch(e) {}
+    } catch(e) { console.error(e); }
   });
-  mpPeer.on('error', (e) => { mpLog('Error: ' + (e.message||e), '#f44'); console.error(e); });
-  mpPeer.on('close', () => { if (!mpConnected) return; mpLog('Disconnected', '#644'); mpConnected = false; });
-  if (signalData) mpPeer.signal(signalData);
+  mpPeer.on('error', function(e) { mpLog('WebRTC: ' + (e.message||e), '#f44'); console.error(e); });
+  mpPeer.on('close', function() { if (mpConnected) { mpLog('Disconnected', '#644'); mpConnected = false; } });
+  if (signalData) {
+    try { mpPeer.signal(signalData); } catch(e) { mpLog('Signal error: ' + e.message, '#f44'); console.error(e); }
+  }
   return mpPeer;
 }
 
 // Host button
-document.getElementById('host-btn').addEventListener('click', () => {
+document.getElementById('host-btn').addEventListener('click', function() {
   mpCleanup();
   mpRole = 'host';
-  mpLog('Generating link...', '#aa8');
   mpLinkInput.value = ''; mpLinkInput.style.display = 'none';
   mpCopyBtn.style.display = 'none';
-  document.getElementById('mp-connect-btn').style.display = 'block';
+  mpConnectBtn.style.display = 'block';
   makeMP(true, null);
 });
 
-// Join button - check if URL has signal
-document.getElementById('join-btn').addEventListener('click', () => {
-  const hash = location.hash;
-  if (hash.startsWith('#s=') || hash.startsWith('#' + encodeURIComponent('s='))) {
-    // Has host signal in URL
+// Join button
+document.getElementById('join-btn').addEventListener('click', function() {
+  var hash = location.hash;
+  if (hash.indexOf('#s=') === 0) {
     try {
-      const compressed = decodeURIComponent(hash.replace(/^#s=/, ''));
-      const signal = JSON.parse(LZString.decompressFromEncodedURIComponent(compressed));
+      var raw = hash.slice(3);
+      var signal = sigDecode(raw);
       mpRole = 'join';
-      mpLog('Connecting...', '#aa8');
       mpLinkInput.style.display = 'none';
       mpCopyBtn.style.display = 'none';
-      document.getElementById('mp-connect-btn').style.display = 'none';
+      mpConnectBtn.style.display = 'none';
       makeMP(false, signal);
     } catch(e) {
-      mpLog('Invalid link format', '#f44');
+      mpLog('Failed to parse link: ' + e.message, '#f44');
+      console.error(e);
+    }
+  } else if (hash.indexOf('#a=') === 0) {
+    // This is an answer URL being opened (host's page reloaded?)
+    // Try to reconstruct with stored offer
+    var stored = localStorage.getItem('mp_offer');
+    if (stored) {
+      try {
+        var raw = hash.slice(3);
+        var answer = sigDecode(raw);
+        var offer = JSON.parse(stored);
+        mpRole = 'host';
+        mpLinkInput.style.display = 'none';
+        mpCopyBtn.style.display = 'none';
+        mpConnectBtn.style.display = 'none';
+        makeMP(true, offer);  // recreate with stored offer
+        // After a short delay, feed the answer
+        setTimeout(function() {
+          if (mpPeer) {
+            try { mpPeer.signal(answer); } catch(e) { mpLog('Signal error: ' + e.message, '#f44'); }
+          }
+        }, 500);
+      } catch(e) {
+        mpLog('Reconnect failed: ' + e.message, '#f44');
+      }
+    } else {
+      mpLog('No stored offer found. Use Connect button.', '#aa8');
+      mpLinkInput.value = location.href;
+      mpLinkInput.style.display = 'block';
+      mpConnectBtn.style.display = 'block';
     }
   } else {
-    // No signal - prompt user to paste link
-    mpLog('Paste the host link above, then click Connect', '#aa8');
+    mpLog('Open the link from host first, then click Join', '#aa8');
     mpLinkInput.value = ''; mpLinkInput.style.display = 'block';
-    document.getElementById('mp-connect-btn').style.display = 'block';
+    mpConnectBtn.style.display = 'block';
   }
 });
 
-// Connect button - pasted a link
-mpConnectBtn.addEventListener('click', () => {
-  const input = mpLinkInput.value.trim();
+// Connect button — paste answer link here
+mpConnectBtn.addEventListener('click', function() {
+  var input = mpLinkInput.value.trim();
   if (!input) return;
   try {
-    const url = new URL(input);
-    const hash = url.hash;
-    let compressed = '';
-    if (hash.startsWith('#s=')) compressed = hash.slice(3);
-    else if (hash.startsWith('#' + encodeURIComponent('s='))) compressed = hash.slice(3);
-    else { mpLog('Invalid link (no signal found)', '#f44'); return; }
-    compressed = decodeURIComponent(compressed);
-    const signal = JSON.parse(LZString.decompressFromEncodedURIComponent(compressed));
-    if (mpRole === 'host') {
-      // Host receiving answer
-      if (mpPeer) mpPeer.signal(signal);
-      mpLog('Processing answer...', '#aa8');
-    } else {
+    var url = new URL(input);
+    var hash = url.hash || '';
+    var compressed = '';
+    if (hash.indexOf('#a=') === 0) compressed = hash.slice(3);
+    else if (hash.indexOf('#s=') === 0) compressed = hash.slice(3);
+    else { mpLog('Link must contain #a= or #s=', '#f44'); return; }
+    var signal = sigDecode(compressed);
+    if (mpRole === 'host' && mpPeer) {
+      mpPeer.signal(signal);
+      mpLog('Answer applied!', '#4f4');
+    } else if (hash.indexOf('#s=') === 0) {
       mpRole = 'join';
       makeMP(false, signal);
+    } else {
+      mpLog('Click Host first, then paste answer', '#f44');
     }
     mpLinkInput.value = '';
   } catch(e) {
     mpLog('Invalid link: ' + e.message, '#f44');
+    console.error(e);
   }
 });
 
-mpCopyBtn.addEventListener('click', () => {
-  const val = mpLinkInput.value;
+mpCopyBtn.addEventListener('click', function() {
+  var val = mpLinkInput.value;
   if (val) { navigator.clipboard.writeText(val); mpLog('Copied!', '#8cf'); }
 });
 
-// Auto-detect signal on page load
+// Auto-detect signal on load
 (function() {
-  const hash = location.hash;
-  if (hash.startsWith('#s=') || hash.startsWith('#a=')) {
-    const prefix = hash.startsWith('#s=') ? 's' : 'a';
-    // Page was opened with a signal - auto detect
-    mpLog('Link detected. Click Join to connect.', '#aa8');
+  var hash = location.hash;
+  if (hash.indexOf('#s=') === 0) {
+    mpLog('Link with offer detected. Click Join.', '#aa8');
     mpLinkInput.value = location.href;
     mpLinkInput.style.display = 'block';
+  } else if (hash.indexOf('#a=') === 0) {
+    mpLog('Answer link detected. Click Join or Connect.', '#aa8');
+    mpLinkInput.value = location.href;
+    mpLinkInput.style.display = 'block';
+    // Try auto-reconnect with stored offer
+    var stored = localStorage.getItem('mp_offer');
+    if (stored) {
+      mpLog('Found stored offer, reconnecting...', '#aa8');
+      document.getElementById('join-btn').click();
+    }
   }
 })();
 
 // Override placeAtMouse for sync
 placeAtMouse = function(mx, my) {
-  const cx = Math.floor(mx), cy = Math.floor(my);
+  var cx = Math.floor(mx), cy = Math.floor(my);
   if (selectedElement === 'switch') {
-    const cell = getCell(cx, cy);
-    if (cell && cell.type === 'switch') { cell.active = !cell.active; sendMP({ type: 'place', mx, my, element: selectedElement }); return; }
+    var cell = getCell(cx, cy);
+    if (cell && cell.type === 'switch') { cell.active = !cell.active; sendMP({ type: 'place', mx: mx, my: my, element: selectedElement }); return; }
   }
   spawnBrushAt(mx, my, selectedElement);
-  sendMP({ type: 'place', mx, my, element: selectedElement });
+  sendMP({ type: 'place', mx: mx, my: my, element: selectedElement });
 };
 
 // Pause controls
