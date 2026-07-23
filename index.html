@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sandbox</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -172,7 +173,7 @@
   <h2>Sandbox</h2>
 
   <div class="tools-group">
-    <label>Elements</label>
+    <label>Base</label>
     <button class="tool-btn active" data-element="sand" style="--glow:#d4a843">
       <span class="color-dot" style="background:#d4a843;box-shadow:0 0 6px rgba(212,168,67,0.3)"></span> Sand
     </button>
@@ -191,18 +192,10 @@
     <button class="tool-btn" data-element="wood" style="--glow:#6b4423">
       <span class="color-dot" style="background:#6b4423;box-shadow:0 0 6px rgba(107,68,35,0.3)"></span> Wood
     </button>
-    <button class="tool-btn" data-element="uranium" style="--glow:#33ff33">
-      <span class="color-dot" style="background:#33ff33;box-shadow:0 0 10px rgba(51,255,51,0.6)"></span> Uranium
-    </button>
-    <button class="tool-btn" data-element="steam" style="--glow:#ccdddd">
-      <span class="color-dot" style="background:#ccdddd;box-shadow:0 0 6px rgba(200,210,220,0.3)"></span> Steam
-    </button>
-    <button class="tool-btn" data-element="source" style="--glow:#55ccff">
-      <span class="color-dot" style="background:#55ccff;box-shadow:0 0 8px rgba(80,200,255,0.5)"></span> Source
-    </button>
-    <button class="tool-btn" data-element="mover" style="--glow:#00cccc">
-      <span class="color-dot" style="background:#00cccc;box-shadow:0 0 8px rgba(0,204,204,0.5)"></span> Move
-    </button>
+  </div>
+
+  <div class="tools-group">
+    <label>Explosives</label>
     <button class="tool-btn" data-element="gunpowder" style="--glow:#887766">
       <span class="color-dot" style="background:#554433;box-shadow:0 0 6px rgba(100,80,60,0.3)"></span> Powder
     </button>
@@ -211,6 +204,9 @@
     </button>
     <button class="tool-btn" data-element="c4" style="--glow:#ccbb99">
       <span class="color-dot" style="background:#b0a080;box-shadow:0 0 6px rgba(180,160,130,0.3)"></span> C4
+    </button>
+    <button class="tool-btn" data-element="uranium" style="--glow:#33ff33">
+      <span class="color-dot" style="background:#33ff33;box-shadow:0 0 10px rgba(51,255,51,0.6)"></span> Uranium
     </button>
   </div>
 
@@ -236,6 +232,55 @@
     </button>
   </div>
 
+  <div class="tools-group">
+    <label>Energy</label>
+    <button class="tool-btn" data-element="turbine" style="--glow:#66ddff">
+      <span class="color-dot" style="background:#4488aa;box-shadow:0 0 8px rgba(100,220,255,0.5)"></span> Turbine
+    </button>
+    <button class="tool-btn" data-element="cooler" style="--glow:#88ddff">
+      <span class="color-dot" style="background:#3388bb;box-shadow:0 0 8px rgba(130,220,255,0.5)"></span> Cooler
+    </button>
+  </div>
+
+  <div class="tools-group">
+    <label>Mechanics</label>
+    <button class="tool-btn" data-element="piston" style="--glow:#dd9966">
+      <span class="color-dot" style="background:#996644;box-shadow:0 0 6px rgba(220,150,100,0.4)"></span> Piston
+    </button>
+    <button class="tool-btn" data-element="sensor" style="--glow:#99ddff">
+      <span class="color-dot" style="background:#5599bb;box-shadow:0 0 8px rgba(150,220,255,0.5)"></span> Sensor
+    </button>
+  </div>
+
+  <div class="tools-group">
+    <label>Biology</label>
+    <button class="tool-btn" data-element="seeds" style="--glow:#66dd66">
+      <span class="color-dot" style="background:#44aa44;box-shadow:0 0 6px rgba(100,220,100,0.4)"></span> Seeds
+    </button>
+    <button class="tool-btn" data-element="spore" style="--glow:#cc66dd">
+      <span class="color-dot" style="background:#8844aa;box-shadow:0 0 8px rgba(200,100,220,0.5)"></span> Spore
+    </button>
+  </div>
+
+  <div class="tools-group">
+    <label>Utility</label>
+    <button class="tool-btn" data-element="steam" style="--glow:#ccdddd">
+      <span class="color-dot" style="background:#ccdddd;box-shadow:0 0 6px rgba(200,210,220,0.3)"></span> Steam
+    </button>
+    <button class="tool-btn" data-element="ash" style="--glow:#aaa99a">
+      <span class="color-dot" style="background:#aaa99a;box-shadow:0 0 6px rgba(160,155,150,0.3)"></span> Ash
+    </button>
+    <button class="tool-btn" data-element="source" style="--glow:#55ccff">
+      <span class="color-dot" style="background:#55ccff;box-shadow:0 0 8px rgba(80,200,255,0.5)"></span> Source
+    </button>
+    <button class="tool-btn" data-element="mover" style="--glow:#00cccc">
+      <span class="color-dot" style="background:#00cccc;box-shadow:0 0 8px rgba(0,204,204,0.5)"></span> Move
+    </button>
+    <button class="tool-btn" data-element="smoke" style="--glow:#888888">
+      <span class="color-dot" style="background:#888888;box-shadow:0 0 6px rgba(130,130,135,0.3)"></span> Smoke
+    </button>
+  </div>
+
   <div class="tools-group" id="brush-group">
     <label>Brush</label>
     <input type="range" id="brush-slider" min="1" max="12" value="3">
@@ -246,6 +291,17 @@
     <label>Speed</label>
     <input type="range" id="speed-slider" min="1" max="20" value="10" step="1">
     <span id="speed-value">1.0x</span>
+  </div>
+
+  <div class="tools-group">
+    <label>Multiplayer</label>
+    <button id="host-btn" class="tool-btn" style="--glow:#44ff44;border-color:#226622">
+      <span class="color-dot" style="background:#44ff44;box-shadow:0 0 8px rgba(68,255,68,0.4)"></span> Host
+    </button>
+    <button id="join-btn" class="tool-btn" style="--glow:#4488ff;border-color:#224488">
+      <span class="color-dot" style="background:#4488ff;box-shadow:0 0 8px rgba(68,136,255,0.4)"></span> Join
+    </button>
+    <div id="mp-status" style="font-size:10px;color:#666;text-align:center;margin-top:2px">offline</div>
   </div>
 
   <button id="clear-btn">Clear All</button>
@@ -281,6 +337,12 @@ const ELEMENT_COLORS = {
   led:       { r: 100, g: 90,  b: 40 },
   heater:    { r: 140, g: 50,  b: 50 },
   steamgen:  { r: 70,  g: 100, b: 140 },
+  turbine:   { r: 60,  g: 140, b: 170 },
+  cooler:    { r: 80,  g: 160, b: 200 },
+  piston:    { r: 160, g: 110, b: 70 },
+  sensor:    { r: 100, g: 170, b: 210 },
+  seeds:     { r: 60,  g: 160, b: 60 },
+  spore:     { r: 150, g: 70,  b: 180 },
 };
 
 let selectedElement = 'sand';
@@ -647,6 +709,59 @@ function drawCell(x, y, cell) {
       return !!cell.powered;
     }
 
+    case 'turbine': {
+      const v = (cell.seed / 255 - 0.5) * 10;
+      if (cell.powered) {
+        const t = Math.min(1, (cell.life || 0) / 5);
+        ctx.fillStyle = `rgb(${50 + 100 * t|0}, ${130 + 80 * t|0}, ${160 + 80 * t|0})`;
+      } else {
+        ctx.fillStyle = `rgb(${60 + v|0}, ${140 + v * 0.5|0}, ${170 + v * 0.3|0})`;
+      }
+      ctx.fillRect(x, y, 1, 1);
+      return !!cell.powered;
+    }
+
+    case 'cooler': {
+      const v = (cell.seed / 255 - 0.5) * 10;
+      ctx.fillStyle = `rgb(${80 + v|0}, ${160 + v * 0.5|0}, ${200 + v * 0.3|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'piston': {
+      const base = cell.extended ? 180 : 140;
+      const v = (cell.seed / 255 - 0.5) * 12;
+      ctx.fillStyle = `rgb(${base + v|0}, ${(base - 40) + v * 0.6|0}, ${(base - 70) + v * 0.4|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return !!cell.powered;
+    }
+
+    case 'sensor': {
+      const v = (cell.seed / 255 - 0.5) * 10;
+      if (cell.powered) {
+        const t = Math.min(1, (cell.life || 0) / 5);
+      } else {
+        ctx.fillStyle = `rgb(${100 + v|0}, ${170 + v * 0.5|0}, ${210 + v * 0.3|0})`;
+      }
+      ctx.fillRect(x, y, 1, 1);
+      return !!cell.powered;
+    }
+
+    case 'seeds': {
+      const v = (cell.seed / 255 - 0.5) * 15;
+      ctx.fillStyle = `rgb(${60 + v|0}, ${160 + v * 0.6|0}, ${60 + v * 0.3|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'spore': {
+      const pulse = Math.sin(Date.now() * 0.005 + cell.seed) * 10;
+      const v = (cell.seed / 255 - 0.5) * 15;
+      ctx.fillStyle = `rgb(${150 + v + pulse|0}, ${70 + v * 0.3 + pulse * 0.3|0}, ${180 + v * 0.5 + pulse|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
     default:
       return false;
   }
@@ -694,6 +809,16 @@ function render() {
         } else if (cell.type === 'steamgen' && cell.powered) {
           const i = Math.min(1, (cell.life || 0) / 5);
           gctx.fillStyle = `rgba(60,180,255,${0.10 + 0.30 * i})`;
+        } else if (cell.type === 'turbine' && cell.powered) {
+          const i = Math.min(1, (cell.life || 0) / 5);
+          gctx.fillStyle = `rgba(100,220,255,${0.10 + 0.30 * i})`;
+        } else if (cell.type === 'piston' && cell.powered) {
+          gctx.fillStyle = 'rgba(220,150,100,0.25)';
+        } else if (cell.type === 'sensor' && cell.powered) {
+          const i = Math.min(1, (cell.life || 0) / 5);
+          gctx.fillStyle = `rgba(150,220,255,${0.10 + 0.25 * i})`;
+        } else if (cell.type === 'spore') {
+          gctx.fillStyle = 'rgba(200,100,220,0.20)';
         } else {
           gctx.fillStyle = 'rgba(255,120,40,0.30)';
         }
@@ -1170,6 +1295,173 @@ function updateCell(x, y, cell) {
       break;
     }
 
+    // ===== TURBINE =====
+    case 'turbine': {
+      // Generate power from steam or water pressure passing nearby
+      let turbinePower = false;
+      const tDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      for (const [dx, dy] of tDirs) {
+        const n = getCell(x + dx, y + dy);
+        if (n && (n.type === 'steam' || n.type === 'water')) {
+          if (n.type === 'steam') { n.temp = (n.temp || 0) - 20; } // cool steam slightly
+          turbinePower = true;
+        }
+      }
+      if (turbinePower && !cell.powered) {
+        cell.powered = true;
+        cell.life = 5;
+      }
+      if (cell.powered) {
+        cell.life--;
+        if (cell.life <= 0) cell.powered = false;
+      }
+      break;
+    }
+
+    // ===== COOLER =====
+    case 'cooler': {
+      cell.temp = -100;
+      // Condense adjacent steam to water
+      const cDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      for (const [dx, dy] of cDirs) {
+        const n = getCell(x + dx, y + dy);
+        if (n && n.type === 'steam') {
+          setCell(x + dx, y + dy, {
+            type: 'water',
+            seed: Math.random() * 256 | 0,
+            temp: 10,
+          });
+        }
+        if (n && n.temp) {
+          n.temp = Math.max(-50, n.temp - 30);
+        }
+      }
+      break;
+    }
+
+    // ===== PISTON =====
+    case 'piston': {
+      if (!cell.powered && checkPowerNeighbor(x, y)) {
+        cell.powered = true;
+        cell.life = 3;
+      }
+      if (cell.powered) {
+        cell.life--;
+        if (cell.life <= 0) { cell.powered = false; cell.extended = false; }
+      }
+      // Push blocks upward when powered
+      const pushDir = cell.dir || -1; // default push up
+      const pushX = x, pushY = y + pushDir;
+      if (cell.powered && !cell.extended && inBounds(pushX, pushY)) {
+        const target = grid[pushY][pushX];
+        if (target !== null && target.type !== 'wall' && target.type !== 'battery' && target.type !== 'wire') {
+          // Try to push it one more step
+          const pushY2 = pushY + pushDir;
+          if (inBounds(pushX, pushY2) && grid[pushY2][pushX] === null) {
+            grid[pushY2][pushX] = target;
+            grid[pushY][pushX] = null;
+            cell.extended = true;
+          }
+        } else if (target === null) {
+          cell.extended = true;
+        }
+      }
+      if (!cell.powered && cell.extended) {
+        // Retract
+        const pushX = x, pushY = y + pushDir;
+        if (inBounds(pushX, pushY) && grid[pushY][pushX] === null) {
+          // Check if there's something to pull back
+          const pullY = y + pushDir * 2;
+          if (inBounds(pushX, pullY) && grid[pullY][pushX] !== null) {
+            grid[pushY][pushX] = grid[pullY][pushX];
+            grid[pullY][pushX] = null;
+          }
+          cell.extended = false;
+        }
+      }
+      break;
+    }
+
+    // ===== SENSOR =====
+    case 'sensor': {
+      // Emit beam downward, trigger if hits solid
+      const beamLen = 12;
+      let detected = false;
+      for (let d = 1; d <= beamLen; d++) {
+        const nx = x, ny = y + d;
+        if (!inBounds(nx, ny)) break;
+        const target = grid[ny][nx];
+        if (target !== null && target.type !== 'steam' && target.type !== 'smoke' && target.type !== 'fire') {
+          detected = true;
+          break;
+        }
+        if (target === null || target.type === 'steam' || target.type === 'smoke') continue;
+      }
+      if (detected) {
+        if (!cell.powered) { cell.powered = true; cell.life = 3; }
+      } else {
+        if (cell.powered) { cell.powered = false; cell.life = 0; }
+      }
+      break;
+    }
+
+    // ===== SEEDS =====
+    case 'seeds': {
+      // Falls like sand
+      if (isEmpty(x, y + 1))         { moveCell(x, y, x, y + 1); return; }
+      if (isEmpty(x + 1, y + 1))     { moveCell(x, y, x + 1, y + 1); return; }
+      if (isEmpty(x - 1, y + 1))     { moveCell(x, y, x - 1, y + 1); return; }
+
+      // Absorb water and grow
+      const sDirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1]];
+      let hasWater = false;
+      for (const [dx, dy] of sDirs) {
+        const n = getCell(x + dx, y + dy);
+        if (n && n.type === 'water') {
+          hasWater = true;
+          break;
+        }
+      }
+      if (hasWater && Math.random() < 0.05) {
+        // Grow into wood and spawn more wood above
+        setCell(x, y, { type: 'wood', seed: Math.random() * 256 | 0, temp: 20 });
+        for (let i = 1; i <= 3 + Math.floor(Math.random() * 3); i++) {
+          const gx = x + (Math.random() < 0.4 ? (Math.random() < 0.5 ? 1 : -1) : 0);
+          const gy = y - i;
+          if (inBounds(gx, gy) && grid[gy][gx] === null) {
+            setCell(gx, gy, { type: 'wood', seed: Math.random() * 256 | 0, temp: 20 });
+          }
+        }
+        return;
+      }
+      break;
+    }
+
+    // ===== SPORE =====
+    case 'spore': {
+      // Falls like sand
+      if (isEmpty(x, y + 1))         { moveCell(x, y, x, y + 1); return; }
+      const spDir = Math.random() < 0.5 ? -1 : 1;
+      if (isEmpty(x + spDir, y + 1)) { moveCell(x, y, x + spDir, y + 1); return; }
+      if (isEmpty(x - spDir, y + 1)) { moveCell(x, y, x - spDir, y + 1); return; }
+
+      // Die from heat
+      if (cell.temp > 80 || cell.temp < -20) { setCell(x, y, null); return; }
+
+      // Infect adjacent wood or sand
+      if (Math.random() < 0.02) {
+        const spDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+        for (const [dx, dy] of spDirs) {
+          const n = getCell(x + dx, y + dy);
+          if (n && (n.type === 'wood' || n.type === 'sand') && Math.random() < 0.12) {
+            setCell(x + dx, y + dy, { type: 'spore', seed: Math.random() * 256 | 0, temp: (n.temp || 0) });
+            return;
+          }
+        }
+      }
+      break;
+    }
+
     // ===== SAND =====
     case 'sand': {
       if (isEmpty(x, y + 1))         { moveCell(x, y, x, y + 1); return; }
@@ -1538,7 +1830,7 @@ function updateCell(x, y, cell) {
         moveCell(x, y, targetX, y);
         return;
       }
-      if (target.type !== 'wall' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen') {
+      if (target.type !== 'wall' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen' && target.type !== 'turbine' && target.type !== 'cooler' && target.type !== 'piston' && target.type !== 'sensor' && target.type !== 'seeds' && target.type !== 'spore') {
         grid[y][targetX] = grid[y][x];
         grid[y][x] = target;
         return;
@@ -1743,6 +2035,108 @@ function gameLoop(timestamp) {
   render();
   requestAnimationFrame(gameLoop);
 }
+
+// ----- Multiplayer -----
+let peer = null;
+let conn = null;
+let peerId = null;
+const mpStatus = document.getElementById('mp-status');
+
+function getGridData() {
+  const data = [];
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (grid[y][x]) {
+        const c = grid[y][x];
+        data.push({ x, y, type: c.type, seed: c.seed, temp: c.temp || 0,
+          powered: !!c.powered, life: c.life || 0, active: !!c.active,
+          dir: c.dir || 0, extended: !!c.extended, lit: !!c.lit, burning: !!c.burning,
+          pressure: c.pressure || 0 });
+      }
+    }
+  }
+  return data;
+}
+
+function loadGridData(data) {
+  for (const d of data) {
+    if (inBounds(d.x, d.y)) {
+      const cell = { type: d.type, seed: d.seed || Math.random()*256|0, temp: d.temp || 0 };
+      if (d.type === 'battery' || d.type === 'wire' || d.type === 'switch' || d.type === 'led' || d.type === 'heater' || d.type === 'steamgen' || d.type === 'turbine' || d.type === 'piston' || d.type === 'sensor') {
+        cell.powered = !!d.powered; cell.life = d.life || 0;
+      }
+      if (d.type === 'switch') cell.active = !!d.active;
+      if (d.type === 'piston') { cell.dir = d.dir || -1; cell.extended = !!d.extended; }
+      if (d.type === 'battery') { cell.powered = true; cell.life = 5; }
+      grid[d.y][d.x] = cell;
+    }
+  }
+}
+
+function syncPlace(mx, my, element) {
+  if (conn && conn.open) {
+    conn.send(JSON.stringify({ type: 'place', mx, my, element }));
+  }
+}
+
+document.getElementById('host-btn').addEventListener('click', () => {
+  peer = new Peer();
+  peer.on('open', (id) => {
+    peerId = id;
+    mpStatus.textContent = 'ID: ' + id;
+    mpStatus.style.color = '#4f4';
+  });
+  peer.on('connection', (c) => {
+    conn = c;
+    conn.on('open', () => {
+      mpStatus.textContent = 'Connected!';
+      mpStatus.style.color = '#4f4';
+      // Send full grid to late joiner
+      conn.send(JSON.stringify({ type: 'sync', data: getGridData() }));
+    });
+    conn.on('data', (raw) => {
+      const msg = JSON.parse(raw);
+      if (msg.type === 'place') {
+        spawnBrushAt(msg.mx, msg.my, msg.element);
+      }
+    });
+    conn.on('close', () => { mpStatus.textContent = 'Disconnected'; mpStatus.style.color = '#644'; });
+  });
+});
+
+document.getElementById('join-btn').addEventListener('click', () => {
+  const id = prompt('Enter host Peer ID:');
+  if (!id) return;
+  peer = new Peer();
+  peer.on('open', () => {
+    conn = peer.connect(id);
+    conn.on('open', () => {
+      mpStatus.textContent = 'Connected!';
+      mpStatus.style.color = '#4f4';
+    });
+    conn.on('data', (raw) => {
+      const msg = JSON.parse(raw);
+      if (msg.type === 'sync') {
+        loadGridData(msg.data);
+      } else if (msg.type === 'place') {
+        spawnBrushAt(msg.mx, msg.my, msg.element);
+      }
+    });
+    conn.on('close', () => { mpStatus.textContent = 'Disconnected'; mpStatus.style.color = '#644'; });
+  });
+});
+
+// Intercept placeAtMouse to sync
+const origPlace = placeAtMouse;
+placeAtMouse = function(mx, my) {
+  const cx = Math.floor(mx), cy = Math.floor(my);
+  if (selectedElement === 'switch') {
+    const cell = getCell(cx, cy);
+    if (cell && cell.type === 'switch') { cell.active = !cell.active; syncPlace(mx, my, selectedElement); return; }
+  }
+  spawnBrushAt(mx, my, selectedElement);
+  syncPlace(mx, my, selectedElement);
+};
 
 // ----- Start -----
 initGrid();
