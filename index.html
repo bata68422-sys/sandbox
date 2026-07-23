@@ -2012,7 +2012,7 @@ function updateCell(x, y, cell) {
         moveCell(x, y, targetX, y);
         return;
       }
-      if (target.type !== 'wall' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen' && target.type !== 'turbine' && target.type !== 'cooler' && target.type !== 'piston' && target.type !== 'sensor' && target.type !== 'seeds' && target.type !== 'spore') {
+      if (target.type !== 'wall' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'heatwire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen' && target.type !== 'turbine' && target.type !== 'cooler' && target.type !== 'piston' && target.type !== 'sensor' && target.type !== 'seeds' && target.type !== 'spore') {
         grid[y][targetX] = grid[y][x];
         grid[y][x] = target;
         return;
