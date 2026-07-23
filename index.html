@@ -716,8 +716,11 @@ function drawCell(x, y, cell) {
     case 'turbine': {
       const v = (cell.seed / 255 - 0.5) * 10;
       if (cell.powered) {
-        const t = Math.min(1, (cell.life || 0) / 5);
-        ctx.fillStyle = `rgb(${50 + 100 * t|0}, ${130 + 80 * t|0}, ${160 + 80 * t|0})`;
+        const pulse = Math.sin(Date.now() * 0.006 + cell.seed) * 0.3 + 0.7;
+        const r = Math.floor(60 + 180 * pulse * (cell.life / 20));
+        const g = Math.floor(140 + 100 * pulse * (cell.life / 20));
+        const b = Math.floor(170 + 80 * pulse * (cell.life / 20));
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
       } else {
         ctx.fillStyle = `rgb(${60 + v|0}, ${140 + v * 0.5|0}, ${170 + v * 0.3|0})`;
       }
@@ -744,6 +747,7 @@ function drawCell(x, y, cell) {
       const v = (cell.seed / 255 - 0.5) * 10;
       if (cell.powered) {
         const t = Math.min(1, (cell.life || 0) / 5);
+        ctx.fillStyle = `rgb(${100 + 155 * t + v|0}, ${170 + 80 * t + v * 0.5|0}, ${210 + 40 * t + v * 0.3|0})`;
       } else {
         ctx.fillStyle = `rgb(${100 + v|0}, ${170 + v * 0.5|0}, ${210 + v * 0.3|0})`;
       }
@@ -1320,23 +1324,29 @@ function updateCell(x, y, cell) {
 
     // ===== TURBINE =====
     case 'turbine': {
-      // Generate power from steam or water pressure passing nearby
-      let turbinePower = false;
+      // Check 4-directional neighbors for steam
+      let hasSteam = false;
       const tDirs = [[0,1],[0,-1],[1,0],[-1,0]];
       for (const [dx, dy] of tDirs) {
         const n = getCell(x + dx, y + dy);
-        if (n && (n.type === 'steam' || n.type === 'water')) {
-          if (n.type === 'steam') { n.temp = (n.temp || 0) - 20; } // cool steam slightly
-          turbinePower = true;
+        if (n && n.type === 'steam') {
+          hasSteam = true;
+          // Consume steam — convert to nothing (absorbed by turbine)
+          setCell(x + dx, y + dy, null);
         }
       }
-      if (turbinePower && !cell.powered) {
+      if (hasSteam) {
+        // Turbine is spinning — generate power
         cell.powered = true;
-        cell.life = 5;
-      }
-      if (cell.powered) {
+        cell.life = 20;
+      } else if (cell.powered) {
         cell.life--;
         if (cell.life <= 0) cell.powered = false;
+      }
+      // Also accept power from neighbors (to chain turbines)
+      if (!cell.powered && checkPowerNeighbor(x, y)) {
+        cell.powered = true;
+        cell.life = 5;
       }
       break;
     }
