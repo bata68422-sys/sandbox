@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sandbox</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a12;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    color: #ccc;
+  }
+
+  #canvas-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #070714;
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    cursor: crosshair;
+  }
+
+  #panel {
+    width: 180px;
+    flex-shrink: 0;
+    background: #0d0d1a;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-left: 2px solid #1a1a3a;
+    overflow-y: auto;
+    user-select: none;
+  }
+  #panel h2 {
+    font-size: 14px;
+    text-align: center;
+    color: #5555aa;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(80,80,200,0.3);
+  }
+  .tools-group { display: flex; flex-direction: column; gap: 4px; }
+  .tools-group label {
+    font-size: 11px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #12122a;
+    border: 1px solid #222244;
+    border-radius: 6px;
+    color: #999;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 4px transparent;
+  }
+  .tool-btn:hover {
+    background: #1a1a3a;
+    border-color: #4444aa;
+    box-shadow: 0 0 12px rgba(100,100,255,0.15);
+    color: #ccc;
+  }
+  .tool-btn.active {
+    color: #fff;
+    border-color: #6666ff;
+  }
+  .tool-btn .color-dot {
+    width: 18px; height: 18px; border-radius: 4px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  #brush-group { margin-top: 4px; }
+  #brush-group input[type=range],
+  #speed-group input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #12122a;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+  }
+  #brush-group input[type=range]::-webkit-slider-thumb,
+  #speed-group input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #6666ff;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(100,100,255,0.4);
+  }
+  #brush-value, #speed-value {
+    font-size: 13px; color: #5555aa; text-align: center;
+  }
+  #clear-btn {
+    padding: 10px;
+    background: #1a0a0a;
+    border: 1px solid #442222;
+    border-radius: 6px;
+    color: #aa4444;
+    font-size: 13px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: auto;
+    transition: all 0.2s;
+    box-shadow: 0 0 4px transparent;
+  }
+  #clear-btn:hover {
+    background: #2a1010;
+    border-color: #663333;
+    color: #dd6666;
+    box-shadow: 0 0 16px rgba(200,50,50,0.2);
+  }
+  #fps-counter {
+    font-size: 11px;
+    color: #444;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  @media (max-width: 640px) {
+    body { flex-direction: column-reverse; }
+    #panel {
+      width: 100%; height: 120px;
+      flex-direction: row; flex-wrap: wrap;
+      padding: 8px; gap: 4px;
+      border-left: none; border-top: 2px solid #1a1a3a;
+      align-content: flex-start;
+      overflow-y: visible;
+    }
+    #panel h2 { display: none; }
+    .tools-group { flex-direction: row; flex-wrap: wrap; }
+    .tool-btn { padding: 4px 8px; font-size: 11px; }
+    .tool-btn .color-dot { width: 14px; height: 14px; }
+    #brush-group { display: flex; align-items: center; gap: 6px; }
+    #brush-group input[type=range] { width: 80px; }
+    #speed-group { display: flex; align-items: center; gap: 6px; }
+    #speed-group input[type=range] { width: 80px; }
+    #clear-btn { margin-top: 0; padding: 6px 12px; font-size: 11px; }
+    #fps-counter { display: none; }
+    #canvas-container { min-height: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="canvas-container">
+  <canvas id="canvas"></canvas>
+</div>
+
+<div id="panel">
+  <h2>Sandbox</h2>
+
+  <div class="tools-group">
+    <label>Elements</label>
+    <button class="tool-btn active" data-element="sand" style="--glow:#d4a843">
+      <span class="color-dot" style="background:#d4a843;box-shadow:0 0 6px rgba(212,168,67,0.3)"></span> Sand
+    </button>
+    <button class="tool-btn" data-element="water" style="--glow:#3388dd">
+      <span class="color-dot" style="background:#3388dd;box-shadow:0 0 6px rgba(51,136,221,0.3)"></span> Water
+    </button>
+    <button class="tool-btn" data-element="wall" style="--glow:#667788">
+      <span class="color-dot" style="background:#667788;box-shadow:0 0 6px rgba(102,119,136,0.3)"></span> Wall
+    </button>
+    <button class="tool-btn" data-element="acid" style="--glow:#66dd33">
+      <span class="color-dot" style="background:#66dd33;box-shadow:0 0 6px rgba(102,221,51,0.4)"></span> Acid
+    </button>
+    <button class="tool-btn" data-element="fire" style="--glow:#ff6622">
+      <span class="color-dot" style="background:#ff6622;box-shadow:0 0 8px rgba(255,102,34,0.5)"></span> Fire
+    </button>
+    <button class="tool-btn" data-element="wood" style="--glow:#6b4423">
+      <span class="color-dot" style="background:#6b4423;box-shadow:0 0 6px rgba(107,68,35,0.3)"></span> Wood
+    </button>
+    <button class="tool-btn" data-element="uranium" style="--glow:#33ff33">
+      <span class="color-dot" style="background:#33ff33;box-shadow:0 0 10px rgba(51,255,51,0.6)"></span> Uranium
+    </button>
+    <button class="tool-btn" data-element="steam" style="--glow:#ccdddd">
+      <span class="color-dot" style="background:#ccdddd;box-shadow:0 0 6px rgba(200,210,220,0.3)"></span> Steam
+    </button>
+    <button class="tool-btn" data-element="source" style="--glow:#55ccff">
+      <span class="color-dot" style="background:#55ccff;box-shadow:0 0 8px rgba(80,200,255,0.5)"></span> Source
+    </button>
+    <button class="tool-btn" data-element="mover" style="--glow:#00cccc">
+      <span class="color-dot" style="background:#00cccc;box-shadow:0 0 8px rgba(0,204,204,0.5)"></span> Move
+    </button>
+    <button class="tool-btn" data-element="gunpowder" style="--glow:#887766">
+      <span class="color-dot" style="background:#554433;box-shadow:0 0 6px rgba(100,80,60,0.3)"></span> Powder
+    </button>
+    <button class="tool-btn" data-element="fuse" style="--glow:#ccaa66">
+      <span class="color-dot" style="background:#ccaa66;box-shadow:0 0 6px rgba(200,170,100,0.3)"></span> Fuse
+    </button>
+    <button class="tool-btn" data-element="c4" style="--glow:#ccbb99">
+      <span class="color-dot" style="background:#b0a080;box-shadow:0 0 6px rgba(180,160,130,0.3)"></span> C4
+    </button>
+  </div>
+
+  <div class="tools-group">
+    <label>Electronics</label>
+    <button class="tool-btn" data-element="battery" style="--glow:#ffaa33">
+      <span class="color-dot" style="background:#dd8822;box-shadow:0 0 8px rgba(255,170,50,0.5)"></span> Battery
+    </button>
+    <button class="tool-btn" data-element="wire" style="--glow:#66aadd">
+      <span class="color-dot" style="background:#667788;box-shadow:0 0 6px rgba(100,170,220,0.3)"></span> Wire
+    </button>
+    <button class="tool-btn" data-element="switch" style="--glow:#66dd66">
+      <span class="color-dot" style="background:#666677;box-shadow:0 0 6px rgba(100,220,100,0.3)"></span> Switch
+    </button>
+    <button class="tool-btn" data-element="led" style="--glow:#ffee66">
+      <span class="color-dot" style="background:#887744;box-shadow:0 0 6px rgba(255,238,100,0.3)"></span> LED
+    </button>
+    <button class="tool-btn" data-element="heater" style="--glow:#ff5533">
+      <span class="color-dot" style="background:#993333;box-shadow:0 0 6px rgba(255,80,50,0.3)"></span> Heater
+    </button>
+    <button class="tool-btn" data-element="steamgen" style="--glow:#4488cc">
+      <span class="color-dot" style="background:#556688;box-shadow:0 0 8px rgba(60,140,220,0.5)"></span> Steam Gen
+    </button>
+  </div>
+
+  <div class="tools-group" id="brush-group">
+    <label>Brush</label>
+    <input type="range" id="brush-slider" min="1" max="12" value="3">
+    <span id="brush-value">3</span>
+  </div>
+
+  <div class="tools-group" id="speed-group">
+    <label>Speed</label>
+    <input type="range" id="speed-slider" min="1" max="20" value="10" step="1">
+    <span id="speed-value">1.0x</span>
+  </div>
+
+  <button id="clear-btn">Clear All</button>
+  <div id="fps-counter">-- FPS</div>
+</div>
+
+<script>
+"use strict";
+
+// ----- Settings -----
+const COLS = 200;
+const ROWS = 200;
+
+const ELEMENT_COLORS = {
+  sand:    { r: 212, g: 168, b: 67 },
+  water:   { r: 51,  g: 136, b: 221 },
+  wall:    { r: 102, g: 119, b: 136 },
+  acid:    { r: 102, g: 221, b: 51 },
+  fire:    { r: 255, g: 102, b: 34 },
+  wood:    { r: 107, g: 68,  b: 35 },
+  smoke:   { r: 130, g: 130, b: 135 },
+  mover:   { r: 0,   g: 204, b: 204 },
+  uranium: { r: 50,  g: 255, b: 50 },
+  ash:     { r: 160, g: 155, b: 150 },
+  steam:   { r: 200, g: 210, b: 220 },
+  source:  { r: 80,  g: 200, b: 255 },
+  gunpowder: { r: 60,  g: 55,  b: 50 },
+  fuse:      { r: 190, g: 170, b: 130 },
+  c4:        { r: 160, g: 150, b: 120 },
+  battery:   { r: 220, g: 130, b: 50 },
+  wire:      { r: 120, g: 130, b: 150 },
+  switch:    { r: 140, g: 140, b: 160 },
+  led:       { r: 100, g: 90,  b: 40 },
+  heater:    { r: 140, g: 50,  b: 50 },
+  steamgen:  { r: 70,  g: 100, b: 140 },
+};
+
+let selectedElement = 'sand';
+let brushSize = 3;
+let speed = 1.0;
+let updateAccum = 0;
+const MAX_STEPS_PER_FRAME = 4;
+let explosionFlash = { timer: 0, x: 0, y: 0 };
+
+// ----- Grid -----
+let grid = [];
+
+function initGrid() {
+  grid = [];
+  for (let y = 0; y < ROWS; y++) {
+    grid[y] = new Array(COLS).fill(null);
+  }
+}
+
+function clearGrid() { initGrid(); }
+
+function inBounds(x, y) {
+  return x >= 0 && x < COLS && y >= 0 && y < ROWS;
+}
+
+function isEmpty(x, y) {
+  return inBounds(x, y) && grid[y][x] === null;
+}
+
+function getCell(x, y) {
+  return inBounds(x, y) ? grid[y][x] : null;
+}
+
+function setCell(x, y, val) {
+  if (inBounds(x, y)) grid[y][x] = val;
+}
+
+function moveCell(x1, y1, x2, y2) {
+  if (!inBounds(x1, y1) || !inBounds(x2, y2)) return;
+  grid[y2][x2] = grid[y1][x1];
+  grid[y1][x1] = null;
+}
+
+// ----- Canvas Setup -----
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = COLS;
+canvas.height = ROWS;
+
+const glowCanvas = document.createElement('canvas');
+const gctx = glowCanvas.getContext('2d');
+glowCanvas.width = COLS;
+glowCanvas.height = ROWS;
+
+// ----- Heat System -----
+
+// Blend a base colour toward red/orange/yellow based on temperature.
+// Returns an rgb CSS string when hot, or null when cold.
+function heatBlend(r, g, b, temp) {
+  if (!temp || temp <= 0) return null;
+  const t = Math.min(temp / 900, 1);
+  const blend = Math.min(temp / 150, 1);
+  let hr, hg, hb;
+  if (t < 0.4) {
+    const s = t / 0.4;
+    hr = 255; hg = 60 + 160 * s; hb = 0;
+  } else if (t < 0.7) {
+    const s = (t - 0.4) / 0.3;
+    hr = 255; hg = 220 + 35 * s; hb = 0 + 40 * s;
+  } else {
+    const s = (t - 0.7) / 0.3;
+    hr = 255; hg = 255; hb = 40 + 100 * s;
+  }
+  return `rgb(${r + (hr - r) * blend | 0},${g + (hg - g) * blend | 0},${b + (hb - b) * blend | 0})`;
+}
+
+// Transfer heat to four orthogonal neighbours.
+function handleHeat(cell, x, y) {
+  if (!cell.temp || cell.temp <= 0) return;
+  cell.temp *= 0.995;
+  if (cell.temp < 0.5) { cell.temp = 0; return; }
+  const amount = Math.max(0, cell.temp * 0.015);
+  if (amount < 0.3) return;
+  const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+  for (const [dx, dy] of dirs) {
+    const nx = x + dx, ny = y + dy;
+    if (!inBounds(nx, ny)) continue;
+    const n = grid[ny][nx];
+    if (n !== null) {
+      n.temp = (n.temp || 0) + amount;
+      cell.temp -= amount;
+    }
+  }
+}
+
+// ----- Fire colour gradient -----
+function getFireColor(life, maxLife) {
+  const t = Math.max(0, Math.min(1, life / maxLife));
+  let r, g, b;
+  if (t > 0.7) {
+    const s = (t - 0.7) / 0.3;
+    r = 255; g = 130 + 125 * s; b = 30 + 120 * s;
+  } else if (t > 0.4) {
+    const s = (t - 0.4) / 0.3;
+    r = 255; g = 100 + 30 * s; b = 10 + 20 * s;
+  } else if (t > 0.15) {
+    const s = (t - 0.15) / 0.25;
+    r = 255; g = 40 + 60 * s; b = 0 + 10 * s;
+  } else {
+    const s = t / 0.15;
+    r = 40 + 215 * s; g = 0 + 40 * s; b = 0;
+  }
+  return { r: r|0, g: g|0, b: b|0 };
+}
+
+// ----- Rendering -----
+
+function drawCell(x, y, cell) {
+  switch (cell.type) {
+
+    case 'sand': {
+      const v = (cell.seed / 255 - 0.5) * 35;
+      ctx.fillStyle = `rgb(${212 + v|0}, ${168 + v * 0.6|0}, ${67 + v * 0.4|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'water': {
+      const p = cell.pressure || 0;
+      const bright = 1 - Math.min(p / 20, 1) * 0.5;
+      const r = Math.floor(30 + 30 * bright);
+      const g = Math.floor(80 + 80 * bright);
+      const b = Math.floor(160 + 60 * bright);
+      ctx.fillStyle = `rgba(${r},${g},${b},0.6)`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'wall': {
+      const v = (cell.seed / 255 - 0.5) * 20;
+      const heat = heatBlend(102 + v, 119 + v, 136 + v, cell.temp);
+      ctx.fillStyle = heat || `rgb(${102 + v|0}, ${119 + v|0}, ${136 + v|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'acid': {
+      const v = (cell.seed / 255 - 0.5) * 25;
+      ctx.fillStyle = `rgb(${102 + v|0}, ${221 + v * 0.6|0}, ${51 + v * 0.3|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'fire': {
+      const fc = getFireColor(cell.life, cell.maxLife);
+      ctx.fillStyle = `rgb(${fc.r},${fc.g},${fc.b})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'wood': {
+      if (cell.burning) {
+        const p = Math.min(cell.burnProgress, 100) / 100;
+        let r, g, b;
+        if (p < 0.3) {
+          const t = p / 0.3;
+          r = 107 - 50 * t; g = 68 - 45 * t; b = 35 - 28 * t;
+        } else if (p < 0.6) {
+          const t = (p - 0.3) / 0.3;
+          r = 57 - 32 * t; g = 23 - 16 * t; b = 7 - 5 * t;
+        } else if (p < 0.85) {
+          const t = (p - 0.6) / 0.25;
+          r = 25 + 45 * t; g = 7 + 35 * t; b = 2 + 12 * t;
+        } else {
+          const t = (p - 0.85) / 0.15;
+          r = 70 + 160 * t; g = 42 + 55 * t; b = 14 + 15 * t;
+        }
+        const heat = heatBlend(r, g, b, cell.temp);
+        ctx.fillStyle = heat || `rgb(${r|0},${g|0},${b|0})`;
+        ctx.fillRect(x, y, 1, 1);
+        return p > 0.5;
+      }
+      const v = (cell.seed / 255 - 0.5) * 18;
+      const heat = heatBlend(107 + v, 68 + v * 0.7, 35 + v * 0.5, cell.temp);
+      ctx.fillStyle = heat || `rgb(${107 + v|0}, ${68 + v * 0.7|0}, ${35 + v * 0.5|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'smoke': {
+      const alpha = Math.max(0.05, (cell.life / cell.maxLife)) * 0.45;
+      const drift = Math.sin(cell.seed * 0.1 + cell.life * 0.05) * 8;
+      const t = cell.temp || 0;
+      const r = 130 + drift + t * 0.05;
+      const g = 130 + drift - t * 0.02;
+      const b = 135 + drift - t * 0.04;
+      ctx.fillStyle = `rgba(${r|0},${g|0},${b|0},${alpha})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'mover': {
+      const pulse = Math.sin(Date.now() * 0.004 + cell.seed) * 15;
+      ctx.fillStyle = `rgb(${0 + pulse|0}, ${204 + pulse * 0.3|0}, ${204 + pulse * 0.3|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'uranium': {
+      const pulse = Math.sin(Date.now() * 0.003 + cell.seed * 2) * 15;
+      const t = cell.temp || 0;
+
+      // Base neon green; shifts toward yellow → orange as temp rises
+      let r = 40, g = 210, b = 40;
+      if (t > 50) {
+        const heat = Math.min((t - 50) / 100, 1); // 0→1 as temp goes 50→150
+        r = 40 + (220 - 40) * heat;
+        g = 210 - (210 - 100) * heat;
+        b = 40 * (1 - heat * 0.8);
+      }
+      r += pulse * 0.3;
+      g += pulse * 0.2;
+
+      ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'gunpowder': {
+      const v = (cell.seed / 255 - 0.5) * 12;
+      ctx.fillStyle = `rgb(${60 + v|0}, ${55 + v|0}, ${50 + v|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'fuse': {
+      if (cell.lit) {
+        const p = Math.min(1, Math.max(0, cell.life / (cell.maxLife || 1)));
+        let r, g, b;
+        if (p > 0.6) {
+          const t = (p - 0.6) / 0.4;
+          r = 255; g = 160 + 95 * t; b = 20 + 200 * t;
+        } else if (p > 0.25) {
+          const t = (p - 0.25) / 0.35;
+          r = 255; g = 60 + 100 * t; b = 0 + 20 * t;
+        } else {
+          const t = p / 0.25;
+          r = 40 + 215 * t; g = 0 + 60 * t; b = 0;
+        }
+        ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+      } else {
+        const v = (cell.seed / 255 - 0.5) * 15;
+        ctx.fillStyle = `rgb(${190 + v|0}, ${170 + v|0}, ${130 + v|0})`;
+      }
+      ctx.fillRect(x, y, 1, 1);
+      return cell.lit;
+    }
+
+    case 'c4': {
+      const v = (cell.seed / 255 - 0.5) * 10;
+      const heat = heatBlend(160 + v, 150 + v, 120 + v, cell.temp);
+      ctx.fillStyle = heat || `rgb(${160 + v|0},${150 + v|0},${120 + v|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'ash': {
+      const v = (cell.seed / 255 - 0.5) * 15;
+      const gray = 150 + v;
+      ctx.fillStyle = `rgb(${gray|0},${gray|0},${gray|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'steam': {
+      const alpha = Math.max(0.08, (cell.life / cell.maxLife)) * 0.5;
+      const drift = Math.sin(cell.seed * 0.1 + cell.life * 0.05) * 6;
+      const bright = 200 + drift + ((cell.temp || 0) * 0.02);
+      ctx.fillStyle = `rgba(${bright|0},${bright + 10|0},${bright + 20|0},${alpha})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'source': {
+      const pulse = Math.sin(Date.now() * 0.003 + cell.seed * 2) * 15;
+      const r = 60 + pulse * 0.3;
+      const g = 180 + pulse * 0.4;
+      const b = 255;
+      ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'battery': {
+      ctx.fillStyle = '#dd8822';
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'wire': {
+      const v = (cell.seed / 255 - 0.5) * 15;
+      if (cell.powered) {
+        const bright = Math.min(1, (cell.life || 0) / 5);
+        const r = 80 + 100 * bright;
+        const g = 100 + 80 * bright;
+        const b = 130 + 120 * bright;
+        ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+      } else {
+        ctx.fillStyle = `rgb(${120 + v|0}, ${130 + v|0}, ${150 + v|0})`;
+      }
+      ctx.fillRect(x, y, 1, 1);
+      return !!cell.powered;
+    }
+
+    case 'switch': {
+      if (cell.active) {
+        const g = cell.powered ? 200 : 140;
+        ctx.fillStyle = `rgb(60,${g},60)`;
+      } else {
+        ctx.fillStyle = '#666677';
+      }
+      ctx.fillRect(x, y, 1, 1);
+      return !!cell.powered;
+    }
+
+    case 'led': {
+      if (cell.powered) {
+        const t = Math.min(1, (cell.life || 0) / 20);
+        const r = 150 + 105 * t;
+        const g = 150 + 105 * t;
+        const b = 100 + 155 * t;
+        ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+      } else {
+        ctx.fillStyle = '#554422';
+      }
+      ctx.fillRect(x, y, 1, 1);
+      return !!cell.powered;
+    }
+
+    case 'heater': {
+      if (cell.powered) {
+        const t = Math.min(1, (cell.temp || 0) / 500);
+        const r = 130 + 125 * t;
+        const g = 40 + 100 * t * 0.4;
+        const b = 40;
+        ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+      } else {
+        ctx.fillStyle = '#882222';
+      }
+      ctx.fillRect(x, y, 1, 1);
+      return cell.powered || (cell.temp || 0) > 100;
+    }
+
+    case 'steamgen': {
+      const v = (cell.seed / 255 - 0.5) * 12;
+      const r = 65 + v, g = 95 + v * 0.7, b = 135 + v * 0.5;
+      if (cell.powered) {
+        const t = Math.min(1, (cell.life || 0) / 5);
+        ctx.fillStyle = `rgb(${r|0}, ${g + 80 * t|0}, ${b + 100 * t|0})`;
+      } else {
+        ctx.fillStyle = `rgb(${r|0}, ${g|0}, ${b|0})`;
+      }
+      ctx.fillRect(x, y, 1, 1);
+      return !!cell.powered;
+    }
+
+    default:
+      return false;
+  }
+}
+
+function render() {
+  const grad = ctx.createLinearGradient(0, 0, 0, ROWS);
+  grad.addColorStop(0, '#070714');
+  grad.addColorStop(0.4, '#0a0a1e');
+  grad.addColorStop(0.7, '#080818');
+  grad.addColorStop(1, '#04040a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, COLS, ROWS);
+
+  gctx.clearRect(0, 0, COLS, ROWS);
+
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const cell = grid[y][x];
+      if (!cell) continue;
+      const needsGlow = drawCell(x, y, cell);
+      if (needsGlow) {
+        if (cell.type === 'acid') {
+          gctx.fillStyle = 'rgba(102,221,51,0.25)';
+        } else if (cell.type === 'mover') {
+          gctx.fillStyle = 'rgba(0,204,204,0.25)';
+        } else if (cell.type === 'uranium') {
+          const intensity = 0.25 + Math.min((cell.temp || 0) / 150, 1) * 0.35;
+          gctx.fillStyle = `rgba(50,255,50,${intensity})`;
+        } else if (cell.type === 'source') {
+          gctx.fillStyle = 'rgba(80,200,255,0.35)';
+        } else if (cell.type === 'battery') {
+          gctx.fillStyle = 'rgba(255,180,50,0.40)';
+        } else if (cell.type === 'wire' && cell.powered) {
+          const i = Math.min(1, (cell.life || 0) / 5);
+          gctx.fillStyle = `rgba(50,180,255,${0.15 + 0.25 * i})`;
+        } else if (cell.type === 'switch' && cell.powered) {
+          gctx.fillStyle = 'rgba(50,255,50,0.35)';
+        } else if (cell.type === 'led' && cell.powered) {
+          const i = Math.min(1, (cell.life || 0) / 20);
+          gctx.fillStyle = `rgba(255,255,200,${0.20 + 0.40 * i})`;
+        } else if (cell.type === 'heater' && cell.powered) {
+          const i = Math.min(1, (cell.temp || 0) / 500);
+          gctx.fillStyle = `rgba(255,80,30,${0.15 + 0.35 * i})`;
+        } else if (cell.type === 'steamgen' && cell.powered) {
+          const i = Math.min(1, (cell.life || 0) / 5);
+          gctx.fillStyle = `rgba(60,180,255,${0.10 + 0.30 * i})`;
+        } else {
+          gctx.fillStyle = 'rgba(255,120,40,0.30)';
+        }
+        gctx.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.filter = 'blur(2px)';
+  ctx.drawImage(glowCanvas, 0, 0);
+  ctx.restore();
+
+  // Explosion flash overlay
+  if (explosionFlash.timer > 0) {
+    const intensity = explosionFlash.timer / 10;
+    const fx = explosionFlash.x, fy = explosionFlash.y;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    // Outer glow
+    const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, 30 + (10 - explosionFlash.timer) * 4);
+    grad.addColorStop(0, `rgba(255,255,200,${0.9 * intensity})`);
+    grad.addColorStop(0.2, `rgba(255,200,100,${0.6 * intensity})`);
+    grad.addColorStop(0.5, `rgba(255,100,30,${0.3 * intensity})`);
+    grad.addColorStop(1, 'rgba(255,100,30,0)');
+    ctx.fillStyle = grad;
+    ctx.filter = 'blur(3px)';
+    ctx.fillRect(0, 0, COLS, ROWS);
+    ctx.restore();
+    explosionFlash.timer--;
+  }
+}
+
+// ----- Element Spawning -----
+function spawnElement(x, y, type) {
+  if (!inBounds(x, y)) return;
+  if (grid[y][x] !== null) return;
+
+  const cell = { type: type, seed: Math.floor(Math.random() * 256), temp: 0 };
+
+  if (type === 'fire') {
+    cell.maxLife = 60 + Math.floor(Math.random() * 60);
+    cell.life = cell.maxLife;
+    cell.temp = 600 + Math.floor(Math.random() * 200);
+  } else if (type === 'smoke') {
+    cell.maxLife = 30 + Math.floor(Math.random() * 20);
+    cell.life = cell.maxLife;
+  } else if (type === 'uranium') {
+    cell.temp = 30 + Math.floor(Math.random() * 20);
+  } else if (type === 'steam') {
+    cell.maxLife = 40 + Math.floor(Math.random() * 30);
+    cell.life = cell.maxLife;
+    cell.temp = 80 + Math.floor(Math.random() * 40);
+  } else if (type === 'battery') {
+    cell.powered = true;
+    cell.life = 5;
+  } else if (type === 'switch') {
+    cell.active = false;
+  }
+
+  grid[y][x] = cell;
+}
+
+function spawnBrushAt(mx, my, element) {
+  const cx = Math.floor(mx);
+  const cy = Math.floor(my);
+  const half = Math.floor(brushSize / 2);
+
+  for (let dy = 0; dy < brushSize; dy++) {
+    for (let dx = 0; dx < brushSize; dx++) {
+      const x = cx + dx - half;
+      const y = cy + dy - half;
+      if (brushSize > 2) {
+        const dist = Math.abs(dx - half) + Math.abs(dy - half);
+        if (dist > half && Math.random() > 0.4) continue;
+      }
+      spawnElement(x, y, element);
+    }
+  }
+
+  if (element === 'fire' && brushSize >= 2) {
+    for (let i = 0; i < brushSize * 2; i++) {
+      const ox = cx + Math.floor(Math.random() * brushSize) - half;
+      const oy = cy + Math.floor(Math.random() * brushSize) - half;
+      spawnElement(ox, oy, 'fire');
+    }
+  }
+}
+
+function placeAtMouse(mx, my) {
+  const cx = Math.floor(mx);
+  const cy = Math.floor(my);
+  // Toggle switch on click
+  if (selectedElement === 'switch') {
+    const cell = getCell(cx, cy);
+    if (cell && cell.type === 'switch') {
+      cell.active = !cell.active;
+      return;
+    }
+  }
+  spawnBrushAt(mx, my, selectedElement);
+}
+
+// Map CSS coords → canvas grid
+function canvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    mx: (e.clientX - rect.left) * canvas.width / rect.width,
+    my: (e.clientY - rect.top)  * canvas.height / rect.height,
+  };
+}
+
+// ----- Mouse / Touch Input -----
+let isMouseDown = false;
+
+canvas.addEventListener('mousedown', (e) => {
+  isMouseDown = true;
+  const { mx, my } = canvasCoords(e);
+  placeAtMouse(mx, my);
+});
+canvas.addEventListener('mousemove', (e) => {
+  if (isMouseDown) {
+    const { mx, my } = canvasCoords(e);
+    placeAtMouse(mx, my);
+  }
+});
+canvas.addEventListener('mouseup',   () => { isMouseDown = false; });
+canvas.addEventListener('mouseleave', () => { isMouseDown = false; });
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const mx = (touch.clientX - rect.left) * canvas.width / rect.width;
+  const my = (touch.clientY - rect.top)  * canvas.height / rect.height;
+  isMouseDown = true;
+  placeAtMouse(mx, my);
+}, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (isMouseDown) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const mx = (touch.clientX - rect.left) * canvas.width / rect.width;
+    const my = (touch.clientY - rect.top)  * canvas.height / rect.height;
+    placeAtMouse(mx, my);
+  }
+}, { passive: false });
+canvas.addEventListener('touchend', () => { isMouseDown = false; });
+
+// ----- UI Setup -----
+function applyButtonGlow(btn, active) {
+  const color = btn.style.getPropertyValue('--glow').trim();
+  if (active) {
+    btn.style.boxShadow = `0 0 10px ${color}, 0 0 25px ${color}`;
+    btn.style.borderColor = color;
+    btn.style.background = '#1a1a3a';
+  } else {
+    btn.style.boxShadow = 'none';
+    btn.style.borderColor = '#222244';
+    btn.style.background = '#12122a';
+  }
+}
+
+document.querySelectorAll('.tool-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tool-btn').forEach(b => {
+      b.classList.remove('active');
+      applyButtonGlow(b, false);
+    });
+    btn.classList.add('active');
+    applyButtonGlow(btn, true);
+    selectedElement = btn.dataset.element;
+  });
+  if (btn.classList.contains('active')) {
+    applyButtonGlow(btn, true);
+  }
+});
+
+const brushSlider = document.getElementById('brush-slider');
+const brushValue = document.getElementById('brush-value');
+brushSlider.addEventListener('input', () => {
+  brushSize = parseInt(brushSlider.value);
+  brushValue.textContent = brushSize;
+});
+
+const speedSlider = document.getElementById('speed-slider');
+const speedValue = document.getElementById('speed-value');
+speedSlider.addEventListener('input', () => {
+  speed = parseInt(speedSlider.value) / 10;
+  speedValue.textContent = speed.toFixed(1) + 'x';
+  updateAccum = 0;
+});
+
+document.getElementById('clear-btn').addEventListener('click', () => {
+  clearGrid();
+});
+
+// ----- Update / Physics -----
+
+function shuffledOrder(len) {
+  const arr = new Array(len);
+  for (let i = 0; i < len; i++) arr[i] = i;
+  for (let i = len - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Spawn shrapnel rays from explosion centre
+function addShrapnel(x, y, radius, count, temp, lifeMin, lifeMax) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const len = radius + 1 + Math.floor(Math.random() * 4);
+    for (let d = 1; d <= len; d++) {
+      const nx = x + Math.round(Math.cos(angle) * d);
+      const ny = y + Math.round(Math.sin(angle) * d);
+      if (!inBounds(nx, ny)) break;
+      if (grid[ny][nx] !== null) continue;
+      if (Math.random() < (1 - d / (len + 1)) * 0.8) {
+        const life = lifeMin + Math.floor(Math.random() * (lifeMax - lifeMin));
+        setCell(nx, ny, {
+          type: d < len * 0.6 ? 'fire' : (Math.random() < 0.5 ? 'smoke' : 'fire'),
+          seed: Math.random() * 256 | 0,
+          maxLife: life, life: life,
+          temp: temp * (1 - d / (len + 1)),
+        });
+      }
+    }
+  }
+}
+
+// Push particles away from explosion centre (water, sand, gunpowder, ash)
+function blastPush(x, y, radius, force, upBias) {
+  upBias = upBias || 0;
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      if (dx === 0 && dy === 0) continue;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > radius) continue;
+      const nx = x + dx, ny = y + dy;
+      if (!inBounds(nx, ny)) continue;
+      const cell = grid[ny][nx];
+      if (!cell || (cell.type !== 'water' && cell.type !== 'sand' && cell.type !== 'gunpowder' && cell.type !== 'ash')) continue;
+      if (Math.random() > 0.65) continue;
+
+      // Direction: outward from centre with upward bias
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      let ndx = dx / len;
+      let ndy = dy / len - upBias;
+      const nlen = Math.sqrt(ndx * ndx + ndy * ndy) || 1;
+      ndx /= nlen; ndy /= nlen;
+
+      const steps = 1 + Math.floor(Math.random() * force);
+      let cx = nx, cy = ny;
+      for (let s = 0; s < steps; s++) {
+        const tx = Math.round(cx + ndx);
+        const ty = Math.round(cy + ndy);
+        if (!inBounds(tx, ty) || grid[ty][tx] !== null) break;
+        cx = tx; cy = ty;
+      }
+      if (cx !== nx || cy !== ny) {
+        grid[cy][cx] = grid[ny][nx];
+        grid[ny][nx] = null;
+      }
+    }
+  }
+}
+
+// Wake up floating particles above blast crater — forces them to fall
+function collapseWake(x, y, radius) {
+  const r = radius + 2;
+  // Process bottom-up within the affected area
+  for (let dy = r; dy >= -r; dy--) {
+    for (let dx = -r; dx <= r; dx++) {
+      const nx = x + dx, ny = y + dy;
+      if (!inBounds(nx, ny)) continue;
+      const cell = grid[ny][nx];
+      if (!cell) continue;
+      const type = cell.type;
+      if (type !== 'sand' && type !== 'gunpowder' && type !== 'ash' && type !== 'water') continue;
+      const below = getCell(nx, ny + 1);
+      if (below === null) {
+        moveCell(nx, ny, nx, ny + 1);
+      } else if (type !== 'water' && (below.type === 'fire' || below.type === 'smoke')) {
+        grid[ny + 1][nx] = cell;
+        grid[ny][nx] = null;
+      }
+    }
+  }
+}
+
+// Throw sand/ash upward in a cone above the explosion centre
+function blastUpward(x, y, radius) {
+  const height = radius + 4;
+  for (let dy = 1; dy <= height; dy++) {
+    const spread = Math.max(0, radius - Math.floor(dy * 0.35));
+    for (let dx = -spread; dx <= spread; dx++) {
+      const nx = x + dx, ny = y - dy;
+      if (!inBounds(nx, ny)) continue;
+      const cell = grid[ny][nx];
+      if (!cell || (cell.type !== 'sand' && cell.type !== 'ash')) continue;
+      const lift = 4 + Math.floor(Math.random() * 8);
+      let targetY = ny;
+      for (let s = 0; s < lift; s++) {
+        if (!inBounds(nx, targetY - 1) || grid[targetY - 1][nx] !== null) break;
+        targetY--;
+      }
+      if (targetY !== ny) {
+        grid[targetY][nx] = cell;
+        grid[ny][nx] = null;
+      }
+    }
+  }
+}
+
+function checkPowerNeighbor(x, y) {
+  const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+  for (const [dx, dy] of dirs) {
+    const n = getCell(x + dx, y + dy);
+    if (n && n.powered && (n.life || 0) > 0) return true;
+  }
+  return false;
+}
+
+function updateCell(x, y, cell) {
+  if (!cell) return;
+
+  // Heat transfer runs first for every cell that has temperature
+  handleHeat(cell, x, y);
+
+  switch (cell.type) {
+
+    // ===== BATTERY =====
+    case 'battery': {
+      cell.powered = true;
+      cell.life = 5;
+      break;
+    }
+
+    // ===== WIRE =====
+    case 'wire': {
+      if (cell.powered) {
+        cell.life--;
+        if (cell.life <= 0) cell.powered = false;
+      }
+      if (!cell.powered && checkPowerNeighbor(x, y)) {
+        cell.powered = true;
+        cell.life = 5;
+      }
+      break;
+    }
+
+    // ===== SWITCH =====
+    case 'switch': {
+      if (!cell.active) {
+        if (cell.powered) { cell.powered = false; cell.life = 0; }
+        break;
+      }
+      if (cell.powered) {
+        cell.life--;
+        if (cell.life <= 0) cell.powered = false;
+      }
+      if (!cell.powered && checkPowerNeighbor(x, y)) {
+        cell.powered = true;
+        cell.life = 5;
+      }
+      break;
+    }
+
+    // ===== LED =====
+    case 'led': {
+      if (cell.powered) {
+        cell.life--;
+        if (cell.life <= 0) cell.powered = false;
+      }
+      if (!cell.powered && checkPowerNeighbor(x, y)) {
+        cell.powered = true;
+        cell.life = 20;
+      }
+      break;
+    }
+
+    // ===== HEATER =====
+    case 'heater': {
+      if (!cell.powered && checkPowerNeighbor(x, y)) {
+        cell.powered = true;
+        cell.life = 5;
+      }
+      if (cell.powered) {
+        cell.temp = Math.min(500, (cell.temp || 0) + 50);
+        cell.life--;
+        if (cell.life <= 0) cell.powered = false;
+      }
+      break;
+    }
+
+    // ===== STEAM GENERATOR =====
+    case 'steamgen': {
+      if (!cell.powered && checkPowerNeighbor(x, y)) {
+        cell.powered = true;
+        cell.life = 5;
+      }
+      if (cell.powered) {
+        cell.life--;
+        if (cell.life <= 0) cell.powered = false;
+        // Generate steam above and to the sides
+        const genDirs = [[0,-1],[-1,-1],[1,-1],[-1,0],[1,0]];
+        for (const [dx, dy] of genDirs) {
+          const nx = x + dx, ny = y + dy;
+          if (!inBounds(nx, ny)) continue;
+          const target = grid[ny][nx];
+          if (target === null && Math.random() < 0.12) {
+            setCell(nx, ny, {
+              type: 'steam',
+              seed: Math.random() * 256 | 0,
+              maxLife: 50 + Math.random() * 30 | 0,
+              life: 50 + Math.random() * 30 | 0,
+              temp: 120 + Math.random() * 30,
+            });
+          } else if (target && target.type === 'water' && Math.random() < 0.4) {
+            setCell(nx, ny, {
+              type: 'steam',
+              seed: Math.random() * 256 | 0,
+              maxLife: 60 + Math.random() * 40 | 0,
+              life: 60 + Math.random() * 40 | 0,
+              temp: (target.temp || 100) + 50,
+            });
+          }
+        }
+      }
+      break;
+    }
+
+    // ===== SAND =====
+    case 'sand': {
+      if (isEmpty(x, y + 1))         { moveCell(x, y, x, y + 1); return; }
+      const dir = Math.random() < 0.5 ? -1 : 1;
+      if (isEmpty(x + dir, y + 1))   { moveCell(x, y, x + dir, y + 1); return; }
+      if (isEmpty(x - dir, y + 1))   { moveCell(x, y, x - dir, y + 1); return; }
+      break;
+    }
+
+    // ===== GUNPOWDER =====
+    case 'gunpowder': {
+      // Explode when hot or adjacent to fire / lit fuse
+      const pgDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      let pgTrig = cell.temp > 80;
+      if (!pgTrig) {
+        for (const [dx, dy] of pgDirs) {
+          const n = getCell(x + dx, y + dy);
+          if (n && (n.type === 'fire' || (n.type === 'fuse' && n.lit))) {
+            pgTrig = true; break;
+          }
+        }
+      }
+      if (pgTrig) {
+        const R = 3;
+        for (let dx = -R; dx <= R; dx++) {
+          for (let dy = -R; dy <= R; dy++) {
+            if (dx === 0 && dy === 0) continue;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > R) continue;
+            const nx = x + dx, ny = y + dy;
+            if (!inBounds(nx, ny)) continue;
+            const t = grid[ny][nx];
+            if (t === null && Math.random() < 0.6) {
+              const life = 40 + Math.floor(Math.random() * 30);
+              setCell(nx, ny, { type: 'fire', seed: Math.random() * 256 | 0, maxLife: life, life: life, temp: 500 });
+            } else if (t !== null) {
+              t.temp = (t.temp || 0) + 300;
+              if (t.type === 'sand' || t.type === 'gunpowder' || t.type === 'wood') {
+                if (Math.random() < 0.4) {
+                  setCell(nx, ny, { type: 'fire', seed: Math.random() * 256 | 0, maxLife: 50 + Math.random() * 30 | 0, life: 50 + Math.random() * 30 | 0, temp: 600 });
+                } else if (t.type === 'wood') {
+                  t.burning = true; t.burnProgress = 0;
+                }
+              }
+            }
+          }
+        }
+        addShrapnel(x, y, 3, 6, 400, 20, 40);
+        blastPush(x, y, 5, 3, 0.4);
+        blastUpward(x, y, 3);
+        collapseWake(x, y, 3);
+        setCell(x, y, null);
+        return;
+      }
+
+      // Falls like sand
+      if (isEmpty(x, y + 1))         { moveCell(x, y, x, y + 1); return; }
+      const pDir = Math.random() < 0.5 ? -1 : 1;
+      if (isEmpty(x + pDir, y + 1))  { moveCell(x, y, x + pDir, y + 1); return; }
+      if (isEmpty(x - pDir, y + 1))  { moveCell(x, y, x - pDir, y + 1); return; }
+      break;
+    }
+
+    // ===== WATER =====
+    case 'water': {
+      // Evaporation: if water is hot enough or near a hot neighbour, turn to steam
+      if (cell.temp > 100) {
+        setCell(x, y, {
+          type: 'steam',
+          seed: Math.floor(Math.random() * 256),
+          maxLife: 40 + Math.floor(Math.random() * 30),
+          life: 40 + Math.floor(Math.random() * 30),
+          temp: cell.temp,
+        });
+        return;
+      }
+      const hotDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      for (const [dx, dy] of hotDirs) {
+        const n = getCell(x + dx, y + dy);
+        if (n && n.temp > 100) {
+          // Cool the hot neighbour slightly
+          n.temp = Math.max(0, (n.temp || 0) - 20);
+          // Turn this water into steam
+          setCell(x, y, {
+            type: 'steam',
+            seed: Math.floor(Math.random() * 256),
+            maxLife: 40 + Math.floor(Math.random() * 30),
+            life: 40 + Math.floor(Math.random() * 30),
+            temp: (n.temp || 100) + 20,
+          });
+          return;
+        }
+      }
+
+      // ==== HYDROSTATIC PRESSURE ====
+      // 1. Vertical pressure — water column above (max 20)
+      let vp = 0;
+      for (let py = y - 1; py >= 0 && vp < 20; py--) {
+        if (grid[py][x] && grid[py][x].type === 'water') vp++;
+        else break;
+      }
+
+      // 2. Horizontal propagation — communicating vessels
+      let hp = 0;
+      for (let px = x - 1; px >= 0; px--) {
+        const c = grid[y][px];
+        if (!c || c.type !== 'water') break;
+        let cvp = 0;
+        for (let py = y - 1; py >= 0 && cvp < 20; py--) {
+          if (grid[py][px] && grid[py][px].type === 'water') cvp++;
+          else break;
+        }
+        hp = Math.max(hp, cvp - (x - px) * 0.5);
+      }
+      for (let px = x + 1; px < COLS; px++) {
+        const c = grid[y][px];
+        if (!c || c.type !== 'water') break;
+        let cvp = 0;
+        for (let py = y - 1; py >= 0 && cvp < 20; py--) {
+          if (grid[py][px] && grid[py][px].type === 'water') cvp++;
+          else break;
+        }
+        hp = Math.max(hp, cvp - (px - x) * 0.5);
+      }
+
+      const pressure = Math.min(20, Math.max(0, Math.round(Math.max(vp, hp))));
+      cell.pressure = pressure; // for visual rendering
+
+      // ==== PRESSURE-DRIVEN MOVEMENT ====
+      // Fountain: water can climb if pressure is high enough
+      if (pressure >= 3 && isEmpty(x, y - 1)) { moveCell(x, y, x, y - 1); return; }
+      if (pressure >= 5) {
+        const pDir = Math.random() < 0.5 ? -1 : 1;
+        if (isEmpty(x + pDir, y - 1)) { moveCell(x, y, x + pDir, y - 1); return; }
+        if (isEmpty(x - pDir, y - 1)) { moveCell(x, y, x - pDir, y - 1); return; }
+      }
+      if (pressure >= 8 && isEmpty(x, y - 2)) { moveCell(x, y, x, y - 2); return; }
+
+      // Normal gravity then sideways
+      if (isEmpty(x, y + 1))         { moveCell(x, y, x, y + 1); return; }
+      const sideDir = Math.random() < 0.5 ? -1 : 1;
+      if (isEmpty(x + sideDir, y))   { moveCell(x, y, x + sideDir, y); return; }
+      if (isEmpty(x - sideDir, y))   { moveCell(x, y, x - sideDir, y); return; }
+      if (isEmpty(x + sideDir, y + 1)) { moveCell(x, y, x + sideDir, y + 1); return; }
+      if (isEmpty(x - sideDir, y + 1)) { moveCell(x, y, x - sideDir, y + 1); return; }
+
+      // Desperate upward push if very high pressure
+      if (pressure >= 10 && isEmpty(x, y - 1)) { moveCell(x, y, x, y - 1); return; }
+      break;
+    }
+
+    // ===== WALL ===== (static)
+
+    // ===== SOURCE =====
+    case 'source': {
+      // Spawn water in adjacent empty cells
+      const dirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
+      for (const [dx, dy] of dirs) {
+        const nx = x + dx, ny = y + dy;
+        if (isEmpty(nx, ny) && Math.random() < 0.08) {
+          setCell(nx, ny, {
+            type: 'water',
+            seed: Math.floor(Math.random() * 256),
+            temp: 20 + Math.random() * 10,
+          });
+        }
+      }
+      break;
+    }
+
+    // ===== FUSE =====
+    case 'fuse': {
+      // Ignite from adjacent fire or explosion heat
+      if (!cell.lit) {
+        const fDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+        for (const [dx, dy] of fDirs) {
+          const n = getCell(x + dx, y + dy);
+          if (n && (n.type === 'fire' || (n.type === 'fuse' && n.lit))) {
+            cell.lit = true;
+            cell.life = 200 + Math.floor(Math.random() * 100);
+            cell.maxLife = cell.life;
+            break;
+          }
+        }
+        if (cell.temp > 100) { cell.lit = true; cell.life = 200 + Math.random() * 100 | 0; cell.maxLife = cell.life; }
+      }
+
+      if (cell.lit) {
+        cell.life--;
+        // Propagate to adjacent unlit fuses
+        if (cell.life % 5 === 0) {
+          const fDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+          for (const [dx, dy] of fDirs) {
+            const n = getCell(x + dx, y + dy);
+            if (n && n.type === 'fuse' && !n.lit) {
+              n.lit = true;
+              n.life = 200 + Math.floor(Math.random() * 100);
+              n.maxLife = n.life;
+            }
+          }
+        }
+        if (cell.life <= 0) {
+          setCell(x, y, null);
+          return;
+        }
+      }
+      break;
+    }
+
+    // ===== C4 =====
+    case 'c4': {
+      // Detonate from fire, lit fuse, or extreme heat
+      const c4Dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      let c4Trig = cell.temp > 150;
+      if (!c4Trig) {
+        for (const [dx, dy] of c4Dirs) {
+          const n = getCell(x + dx, y + dy);
+          if (n && (n.type === 'fire' || (n.type === 'fuse' && n.lit))) {
+            c4Trig = true; break;
+          }
+        }
+      }
+      if (c4Trig) {
+        const R = 5;
+        for (let dx = -R; dx <= R; dx++) {
+          for (let dy = -R; dy <= R; dy++) {
+            if (dx === 0 && dy === 0) continue;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > R) continue;
+            const nx = x + dx, ny = y + dy;
+            if (!inBounds(nx, ny)) continue;
+            const t = grid[ny][nx];
+            if (t === null && Math.random() < 0.7) {
+              const life = 70 + Math.floor(Math.random() * 50);
+              setCell(nx, ny, { type: 'fire', seed: Math.random() * 256 | 0, maxLife: life, life: life, temp: 800 });
+            } else if (t !== null) {
+              t.temp = (t.temp || 0) + 500;
+              if (t.type === 'sand' || t.type === 'gunpowder' || t.type === 'wood') {
+                setCell(nx, ny, { type: 'fire', seed: Math.random() * 256 | 0, maxLife: 50 + Math.random() * 40 | 0, life: 50 + Math.random() * 40 | 0, temp: 700 });
+              } else if (t.type === 'c4' || t.type === 'uranium') {
+                t.temp += 300;
+              }
+            }
+          }
+        }
+        addShrapnel(x, y, 5, 12, 600, 30, 60);
+        blastPush(x, y, 8, 4, 0.5);
+        blastUpward(x, y, 5);
+        collapseWake(x, y, 5);
+        setCell(x, y, null);
+        return;
+      }
+      break;
+    }
+
+    // ===== ACID =====
+    case 'acid': {
+      const neighbors = [[x, y+1], [x, y-1], [x+1, y], [x-1, y]];
+      for (const [nx, ny] of neighbors) {
+        const nc = getCell(nx, ny);
+        if (nc && (nc.type === 'sand' || nc.type === 'wall')) {
+          setCell(nx, ny, null);
+          setCell(x, y, null);
+          return;
+        }
+      }
+      if (isEmpty(x, y + 1))           { moveCell(x, y, x, y + 1); return; }
+      const sDir = Math.random() < 0.5 ? -1 : 1;
+      if (isEmpty(x + sDir, y))        { moveCell(x, y, x + sDir, y); return; }
+      if (isEmpty(x - sDir, y))        { moveCell(x, y, x - sDir, y); return; }
+      if (isEmpty(x + sDir, y + 1))    { moveCell(x, y, x + sDir, y + 1); return; }
+      if (isEmpty(x - sDir, y + 1))    { moveCell(x, y, x - sDir, y + 1); return; }
+      break;
+    }
+
+    // ===== FIRE =====
+    case 'fire': {
+      if (y <= 0) { setCell(x, y, null); return; }
+
+      cell.life--;
+      if (cell.life <= 0) {
+        if (Math.random() < 0.20) {
+          setCell(x, y, {
+            type: 'smoke',
+            seed: Math.floor(Math.random() * 256),
+            maxLife: 30 + Math.floor(Math.random() * 20),
+            life: 30 + Math.floor(Math.random() * 20),
+            temp: 40,
+          });
+        } else {
+          setCell(x, y, null);
+        }
+        return;
+      }
+
+      // Ignite adjacent wood
+      const dirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
+      for (const [dx, dy] of dirs) {
+        const nc = getCell(x + dx, y + dy);
+        if (nc && nc.type === 'wood' && !nc.burning) {
+          nc.burning = true;
+          nc.burnProgress = 0;
+        }
+      }
+
+      // Random upward / sideways movement
+      const moves = [];
+      if (isEmpty(x, y - 1))     moves.push([x, y - 1]);
+      if (isEmpty(x, y - 2))     moves.push([x, y - 2]);
+      if (isEmpty(x + 1, y))     moves.push([x + 1, y]);
+      if (isEmpty(x - 1, y))     moves.push([x - 1, y]);
+      if (isEmpty(x + 1, y - 1)) moves.push([x + 1, y - 1]);
+      if (isEmpty(x - 1, y - 1)) moves.push([x - 1, y - 1]);
+      if (isEmpty(x, y + 1))     moves.push([x, y + 1]);
+
+      if (moves.length > 0) {
+        const [nx, ny] = moves[Math.floor(Math.random() * moves.length)];
+        moveCell(x, y, nx, ny);
+      }
+      break;
+    }
+
+    // ===== WOOD =====
+    case 'wood': {
+      if (cell.burning) {
+        cell.burnProgress += 1.2;
+        if (cell.burnProgress >= 100) {
+          setCell(x, y, {
+            type: 'fire',
+            seed: Math.floor(Math.random() * 256),
+            maxLife: 60 + Math.floor(Math.random() * 40),
+            life: 60 + Math.floor(Math.random() * 40),
+            temp: 700,
+          });
+          return;
+        }
+        if (Math.random() < 0.06 && isEmpty(x, y - 1)) {
+          setCell(x, y - 1, {
+            type: 'smoke',
+            seed: Math.floor(Math.random() * 256),
+            maxLife: 30 + Math.floor(Math.random() * 20),
+            life: 30 + Math.floor(Math.random() * 20),
+            temp: 50,
+          });
+        }
+        if (Math.random() < 0.015) {
+          const spreadDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+          for (const [dx, dy] of spreadDirs) {
+            const nc = getCell(x + dx, y + dy);
+            if (nc && nc.type === 'wood' && !nc.burning) {
+              nc.burning = true;
+              nc.burnProgress = 0;
+            }
+          }
+        }
+      }
+      break;
+    }
+
+    // ===== MOVER =====
+    case 'mover': {
+      const targetX = x + 1;
+      if (!inBounds(targetX, y)) break;
+      const target = grid[y][targetX];
+      if (target === null) {
+        moveCell(x, y, targetX, y);
+        return;
+      }
+      if (target.type !== 'wall' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen') {
+        grid[y][targetX] = grid[y][x];
+        grid[y][x] = target;
+        return;
+      }
+      break;
+    }
+
+    // ===== SMOKE =====
+    case 'smoke': {
+      if (y <= 0) { setCell(x, y, null); return; }
+      cell.life--;
+      if (cell.life <= 0) { setCell(x, y, null); return; }
+      if (Math.random() < 0.15) { setCell(x, y, null); return; }
+
+      const wobble = Math.random() < 0.5 ? -1 : 1;
+      const r = Math.random();
+      if (r < 0.55) {
+        if (isEmpty(x, y - 1))           { moveCell(x, y, x, y - 1); return; }
+      } else if (r < 0.75) {
+        if (isEmpty(x + wobble, y - 1))  { moveCell(x, y, x + wobble, y - 1); return; }
+      } else if (r < 0.90) {
+        if (isEmpty(x + wobble, y))      { moveCell(x, y, x + wobble, y); return; }
+      } else {
+        if (isEmpty(x - wobble, y - 1))  { moveCell(x, y, x - wobble, y - 1); return; }
+      }
+      if (isEmpty(x, y - 1))             { moveCell(x, y, x, y - 1); return; }
+      if (isEmpty(x + wobble, y - 1))    { moveCell(x, y, x + wobble, y - 1); return; }
+      if (isEmpty(x - wobble, y - 1))    { moveCell(x, y, x - wobble, y - 1); return; }
+      break;
+    }
+
+    // ===== URANIUM =====
+    case 'uranium': {
+      // Uranium-water interaction: gently heats adjacent water, doesn't boil instantly
+      const waterDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      let touchedWater = false;
+      for (const [dx, dy] of waterDirs) {
+        const nx = x + dx, ny = y + dy;
+        const n = getCell(nx, ny);
+        if (n && n.type === 'water') {
+          // Gradual heating — water becomes steam naturally at temp>100
+          n.temp = (n.temp || 0) + 6;
+          // Uranium cools slightly from contact
+          cell.temp = (cell.temp || 0) - 0.3;
+          touchedWater = true;
+        }
+      }
+      // Self-heating: slower when water-cooled, full speed without water
+      if (!touchedWater) {
+        cell.temp = (cell.temp || 0) + 0.15;
+      }
+
+      // Critical mass threshold
+      if (cell.temp >= 150) {
+        // ===== NUCLEAR EXPLOSION — radial blast =====
+        const RADIUS = 8;
+        for (let dx = -RADIUS; dx <= RADIUS; dx++) {
+          for (let dy = -RADIUS; dy <= RADIUS; dy++) {
+            if (dx === 0 && dy === 0) continue;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > RADIUS) continue;
+            const nx = x + dx, ny = y + dy;
+            if (!inBounds(nx, ny)) continue;
+            const target = grid[ny][nx];
+
+            // Spawn fire based on distance from epicentre
+            const chance = dist < 3 ? 1 : dist < 5 ? 0.85 : dist < 7 ? 0.6 : 0.3;
+            if (target === null) {
+              if (Math.random() < chance) {
+                const life = 120 + Math.floor(Math.random() * 80);
+                setCell(nx, ny, {
+                  type: 'fire',
+                  seed: Math.floor(Math.random() * 256),
+                  maxLife: life, life: life,
+                  temp: 1500 + Math.floor(Math.random() * 500) * (1 - dist / RADIUS),
+                });
+              }
+            } else {
+              // Heat everything; sand → fire, wood → fire, other uranium chains
+              target.temp = (target.temp || 0) + 800;
+              if (target.type === 'uranium') target.temp += 500;
+              if (target.type === 'sand') {
+                setCell(nx, ny, {
+                  type: 'fire',
+                  seed: Math.floor(Math.random() * 256),
+                  maxLife: 60 + Math.floor(Math.random() * 40),
+                  life: 60 + Math.floor(Math.random() * 40),
+                  temp: 1000,
+                });
+              } else if (target.type === 'wood') {
+                target.burning = true;
+                target.burnProgress = 0;
+              }
+            }
+          }
+        }
+
+        // Visual flash
+        explosionFlash.timer = 10;
+        explosionFlash.x = x;
+        explosionFlash.y = y;
+
+        // Shrapnel rays
+        addShrapnel(x, y, 8, 20, 1000, 40, 80);
+        // Blast wave — pushes sand & water upward
+        blastPush(x, y, 12, 6, 0.6);
+        blastUpward(x, y, 8);
+        collapseWake(x, y, 8);
+        // Uranium completely vaporises
+        setCell(x, y, null);
+        return;
+      }
+
+      // Gravity: fall straight down (like sand but no diagonal roll)
+      if (isEmpty(x, y + 1)) {
+        moveCell(x, y, x, y + 1);
+        return;
+      }
+      break;
+    }
+
+    // ===== ASH =====
+    case 'ash': {
+      if (isEmpty(x, y + 1))         { moveCell(x, y, x, y + 1); return; }
+      const aDir = Math.random() < 0.5 ? -1 : 1;
+      if (isEmpty(x + aDir, y + 1))  { moveCell(x, y, x + aDir, y + 1); return; }
+      if (isEmpty(x - aDir, y + 1))  { moveCell(x, y, x - aDir, y + 1); return; }
+      break;
+    }
+
+    // ===== STEAM =====
+    case 'steam': {
+      if (y <= 0) { setCell(x, y, null); return; }
+      cell.life--;
+      if (cell.life <= 0) { setCell(x, y, null); return; }
+      if (Math.random() < 0.10) { setCell(x, y, null); return; }
+
+      const wobble = Math.random() < 0.5 ? -1 : 1;
+      const r = Math.random();
+      if (r < 0.50) {
+        if (isEmpty(x, y - 1))           { moveCell(x, y, x, y - 1); return; }
+      } else if (r < 0.70) {
+        if (isEmpty(x + wobble, y - 1))  { moveCell(x, y, x + wobble, y - 1); return; }
+      } else if (r < 0.85) {
+        if (isEmpty(x + wobble, y))      { moveCell(x, y, x + wobble, y); return; }
+      } else {
+        if (isEmpty(x - wobble, y - 1))  { moveCell(x, y, x - wobble, y - 1); return; }
+      }
+      if (isEmpty(x, y - 1))             { moveCell(x, y, x, y - 1); return; }
+      if (isEmpty(x + wobble, y - 1))    { moveCell(x, y, x + wobble, y - 1); return; }
+      if (isEmpty(x - wobble, y - 1))    { moveCell(x, y, x - wobble, y - 1); return; }
+      break;
+    }
+  }
+}
+
+// ----- Main Loop -----
+let frameCount = 0;
+let fpsTimer = 0;
+const fpsDisplay = document.getElementById('fps-counter');
+
+function runUpdatePass() {
+  // Bottom-up pass for falling / horizontal / static elements
+  for (let y = ROWS - 1; y >= 0; y--) {
+    const order = shuffledOrder(COLS);
+    for (let i = 0; i < COLS; i++) {
+      const x = order[i];
+      const cell = grid[y][x];
+      if (!cell) continue;
+      if (cell.type === 'fire' || cell.type === 'smoke' || cell.type === 'steam') continue;
+      updateCell(x, y, cell);
+    }
+  }
+
+  // Top-down pass for rising elements (fire, smoke, steam)
+  for (let y = 0; y < ROWS; y++) {
+    const order = shuffledOrder(COLS);
+    for (let i = 0; i < COLS; i++) {
+      const x = order[i];
+      const cell = grid[y][x];
+      if (!cell || (cell.type !== 'fire' && cell.type !== 'smoke' && cell.type !== 'steam')) continue;
+      updateCell(x, y, cell);
+    }
+  }
+}
+
+function gameLoop(timestamp) {
+  frameCount++;
+  if (timestamp - fpsTimer >= 1000) {
+    fpsDisplay.textContent = frameCount + ' FPS';
+    frameCount = 0;
+    fpsTimer = timestamp;
+  }
+
+  updateAccum += speed;
+  const steps = Math.min(Math.floor(updateAccum), MAX_STEPS_PER_FRAME);
+  updateAccum -= steps;
+  for (let s = 0; s < steps; s++) {
+    runUpdatePass();
+  }
+
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+// ----- Start -----
+initGrid();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
