@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sandbox</title>
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -302,6 +302,11 @@
       <span class="color-dot" style="background:#4488ff;box-shadow:0 0 8px rgba(68,136,255,0.4)"></span> Join
     </button>
     <div id="mp-status" style="font-size:10px;color:#666;text-align:center;margin-top:2px">offline</div>
+    <div id="mp-signal" style="display:none;margin-top:4px">
+      <textarea id="mp-signal-out" rows="2" style="width:100%;background:#111;color:#8cf;border:1px solid #333;border-radius:4px;font-size:10px;padding:4px;resize:none" readonly onclick="this.select();navigator.clipboard?.writeText(this.value)"></textarea>
+      <textarea id="mp-signal-in" rows="2" placeholder="Paste signal here..." style="width:100%;background:#111;color:#8cf;border:1px solid #333;border-radius:4px;font-size:10px;padding:4px;resize:none;margin-top:2px"></textarea>
+      <button id="mp-signal-btn" style="width:100%;padding:4px;background:#1a1a3a;border:1px solid #444;border-radius:4px;color:#8cf;font-size:11px;cursor:pointer;margin-top:2px">Send Signal</button>
+    </div>
   </div>
 
   <button id="pause-btn" style="padding:8px;background:#1a1a2a;border:1px solid #442266;border-radius:6px;color:#aa88dd;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:4px;transition:all 0.2s;">Pause (Space)</button>
@@ -2038,11 +2043,15 @@ function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
 }
 
-// ----- Multiplayer -----
-let peer = null;
-let conn = null;
-let peerId = null;
+// ----- Multiplayer (WebRTC via simple-peer, no server needed) -----
+let mpPeer = null;
+let mpConn = null;
+let mpRole = null; // 'host' or 'join'
 const mpStatus = document.getElementById('mp-status');
+const mpSignal = document.getElementById('mp-signal');
+const mpSignalOut = document.getElementById('mp-signal-out');
+const mpSignalIn = document.getElementById('mp-signal-in');
+const mpSignalBtn = document.getElementById('mp-signal-btn');
 
 function getGridData() {
   const data = [];
@@ -2075,89 +2084,83 @@ function loadGridData(data) {
   }
 }
 
-function syncPlace(mx, my, element) {
-  if (conn && conn.open) {
-    conn.send(JSON.stringify({ type: 'place', mx, my, element }));
+function sendMP(msg) {
+  if (mpConn && mpConn.connected) {
+    try { mpConn.send(JSON.stringify(msg)); } catch(e) {}
   }
 }
 
-document.getElementById('host-btn').addEventListener('click', () => {
-  mpStatus.textContent = 'Connecting...';
-  mpStatus.style.color = '#aa8';
-  peer = new Peer();
-  peer.on('open', (id) => {
-    peerId = id;
-    mpStatus.textContent = 'ID: ' + id;
+function onMPData(raw) {
+  try {
+    const msg = JSON.parse(raw);
+    if (msg.type === 'sync') { loadGridData(msg.data); return; }
+    if (msg.type === 'place') { spawnBrushAt(msg.mx, msg.my, msg.element); }
+  } catch(e) {}
+}
+
+function makeMP(isInitiator, signalData) {
+  if (mpPeer) { try { mpPeer.destroy(); } catch(e) {} }
+  mpPeer = new SimplePeer({ initiator: isInitiator, trickle: false });
+  mpPeer.on('signal', (data) => {
+    mpSignalOut.value = JSON.stringify(data);
+    mpSignalOut.select();
+    try { navigator.clipboard.writeText(mpSignalOut.value); } catch(e) {}
+    mpSignal.style.display = 'block';
+    mpStatus.textContent = isInitiator ? 'Send this code to friend' : 'Send this answer to host';
+  });
+  mpPeer.on('connect', () => {
+    mpConn = mpPeer;
+    mpSignal.style.display = 'none';
+    mpStatus.textContent = 'Connected!';
     mpStatus.style.color = '#4f4';
+    if (mpRole === 'host') sendMP({ type: 'sync', data: getGridData() });
   });
-  peer.on('error', (err) => {
-    mpStatus.textContent = 'Error: ' + err.type;
-    mpStatus.style.color = '#f44';
-    console.error('Peer error:', err);
-  });
-  peer.on('connection', (c) => {
-    conn = c;
-    mpStatus.textContent = 'Player joined!';
-    conn.on('open', () => {
-      mpStatus.textContent = 'Connected!';
-      mpStatus.style.color = '#4f4';
-      // Send full grid to late joiner
-      conn.send(JSON.stringify({ type: 'sync', data: getGridData() }));
-    });
-    conn.on('data', (raw) => {
-      try {
-        const msg = JSON.parse(raw);
-        if (msg.type === 'place') {
-          spawnBrushAt(msg.mx, msg.my, msg.element);
-        }
-      } catch(e) {}
-    });
-    conn.on('close', () => { mpStatus.textContent = 'Disconnected'; mpStatus.style.color = '#644'; });
-  });
+  mpPeer.on('data', onMPData);
+  mpPeer.on('error', (err) => { mpStatus.textContent = 'Error'; console.error(err); });
+  mpPeer.on('close', () => { mpStatus.textContent = 'Disconnected'; mpStatus.style.color = '#644'; mpConn = null; });
+  if (signalData) mpPeer.signal(signalData);
+  return mpPeer;
+}
+
+document.getElementById('host-btn').addEventListener('click', () => {
+  mpRole = 'host';
+  mpStatus.textContent = 'Generating signal...';
+  mpStatus.style.color = '#aa8';
+  makeMP(true, null);
 });
 
 document.getElementById('join-btn').addEventListener('click', () => {
-  const id = prompt('Enter host Peer ID:');
-  if (!id) return;
-  mpStatus.textContent = 'Connecting...';
-  mpStatus.style.color = '#aa8';
-  peer = new Peer();
-  peer.on('open', () => {
-    conn = peer.connect(id);
-    conn.on('open', () => {
-      mpStatus.textContent = 'Connected!';
-      mpStatus.style.color = '#4f4';
-    });
-    conn.on('data', (raw) => {
-      try {
-        const msg = JSON.parse(raw);
-        if (msg.type === 'sync') {
-          loadGridData(msg.data);
-        } else if (msg.type === 'place') {
-          spawnBrushAt(msg.mx, msg.my, msg.element);
-        }
-      } catch(e) {}
-    });
-    conn.on('close', () => { mpStatus.textContent = 'Disconnected'; mpStatus.style.color = '#644'; });
-    conn.on('error', (err) => { mpStatus.textContent = 'Conn error'; console.error(err); });
-  });
-  peer.on('error', (err) => {
-    mpStatus.textContent = 'Error: ' + err.type;
-    mpStatus.style.color = '#f44';
-    console.error('Peer error:', err);
-  });
+  const raw = prompt('Paste the signal code from host:');
+  if (!raw) return;
+  try {
+    const signalData = JSON.parse(raw);
+    mpRole = 'join';
+    mpStatus.textContent = 'Connecting...';
+    mpStatus.style.color = '#aa8';
+    makeMP(false, signalData);
+  } catch(e) { mpStatus.textContent = 'Invalid code'; mpStatus.style.color = '#f44'; }
+});
+
+mpSignalBtn.addEventListener('click', () => {
+  const raw = mpSignalIn.value.trim();
+  if (!raw) return;
+  try {
+    const signalData = JSON.parse(raw);
+    if (mpPeer) mpPeer.signal(signalData);
+    mpSignalIn.value = '';
+    mpStatus.textContent = 'Signal sent!';
+  } catch(e) { mpStatus.textContent = 'Invalid signal'; }
 });
 
 // Intercept placeAtMouse to sync
-const origPlace = placeAtMouse;
 placeAtMouse = function(mx, my) {
   const cx = Math.floor(mx), cy = Math.floor(my);
   if (selectedElement === 'switch') {
     const cell = getCell(cx, cy);
-    if (cell && cell.type === 'switch') { cell.active = !cell.active; syncPlace(mx, my, selectedElement); return; }
+    if (cell && cell.type === 'switch') { cell.active = !cell.active; sendMP({ type: 'place', mx, my, element: selectedElement }); return; }
   }
   spawnBrushAt(mx, my, selectedElement);
-  syncPlace(mx, my, selectedElement);
+  sendMP({ type: 'place', mx, my, element: selectedElement });
 };
 
 // Pause controls
