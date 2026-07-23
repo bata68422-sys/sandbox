@@ -24,9 +24,7 @@
     background: #070714;
   }
   canvas {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    display: block;
     image-rendering: pixelated;
     cursor: crosshair;
   }
@@ -172,142 +170,133 @@
   <h2>Sandbox</h2>
 
   <div class="tools-group">
-    <label>Base</label>
+    <label>Основное</label>
     <button class="tool-btn active" data-element="sand" style="--glow:#d4a843">
-      <span class="color-dot" style="background:#d4a843;box-shadow:0 0 6px rgba(212,168,67,0.3)"></span> Sand
+      <span class="color-dot" style="background:#d4a843;box-shadow:0 0 6px rgba(212,168,67,0.3)"></span> Песок
     </button>
     <button class="tool-btn" data-element="water" style="--glow:#3388dd">
-      <span class="color-dot" style="background:#3388dd;box-shadow:0 0 6px rgba(51,136,221,0.3)"></span> Water
+      <span class="color-dot" style="background:#3388dd;box-shadow:0 0 6px rgba(51,136,221,0.3)"></span> Вода
     </button>
     <button class="tool-btn" data-element="wall" style="--glow:#667788">
-      <span class="color-dot" style="background:#667788;box-shadow:0 0 6px rgba(102,119,136,0.3)"></span> Wall
+      <span class="color-dot" style="background:#667788;box-shadow:0 0 6px rgba(102,119,136,0.3)"></span> Стена
     </button>
     <button class="tool-btn" data-element="acid" style="--glow:#66dd33">
-      <span class="color-dot" style="background:#66dd33;box-shadow:0 0 6px rgba(102,221,51,0.4)"></span> Acid
+      <span class="color-dot" style="background:#66dd33;box-shadow:0 0 6px rgba(102,221,51,0.4)"></span> Кислота
     </button>
     <button class="tool-btn" data-element="fire" style="--glow:#ff6622">
-      <span class="color-dot" style="background:#ff6622;box-shadow:0 0 8px rgba(255,102,34,0.5)"></span> Fire
+      <span class="color-dot" style="background:#ff6622;box-shadow:0 0 8px rgba(255,102,34,0.5)"></span> Огонь
     </button>
     <button class="tool-btn" data-element="wood" style="--glow:#6b4423">
-      <span class="color-dot" style="background:#6b4423;box-shadow:0 0 6px rgba(107,68,35,0.3)"></span> Wood
+      <span class="color-dot" style="background:#6b4423;box-shadow:0 0 6px rgba(107,68,35,0.3)"></span> Дерево
     </button>
   </div>
 
   <div class="tools-group">
-    <label>Explosives</label>
+    <label>Взрывчатка</label>
     <button class="tool-btn" data-element="gunpowder" style="--glow:#887766">
-      <span class="color-dot" style="background:#554433;box-shadow:0 0 6px rgba(100,80,60,0.3)"></span> Powder
+      <span class="color-dot" style="background:#554433;box-shadow:0 0 6px rgba(100,80,60,0.3)"></span> Порох
     </button>
     <button class="tool-btn" data-element="fuse" style="--glow:#ccaa66">
-      <span class="color-dot" style="background:#ccaa66;box-shadow:0 0 6px rgba(200,170,100,0.3)"></span> Fuse
+      <span class="color-dot" style="background:#ccaa66;box-shadow:0 0 6px rgba(200,170,100,0.3)"></span> Фитиль
     </button>
     <button class="tool-btn" data-element="c4" style="--glow:#ccbb99">
       <span class="color-dot" style="background:#b0a080;box-shadow:0 0 6px rgba(180,160,130,0.3)"></span> C4
     </button>
     <button class="tool-btn" data-element="uranium" style="--glow:#33ff33">
-      <span class="color-dot" style="background:#33ff33;box-shadow:0 0 10px rgba(51,255,51,0.6)"></span> Uranium
+      <span class="color-dot" style="background:#33ff33;box-shadow:0 0 10px rgba(51,255,51,0.6)"></span> Уран
     </button>
   </div>
 
   <div class="tools-group">
-    <label>Electronics</label>
+    <label>Электроника</label>
     <button class="tool-btn" data-element="battery" style="--glow:#ffaa33">
-      <span class="color-dot" style="background:#dd8822;box-shadow:0 0 8px rgba(255,170,50,0.5)"></span> Battery
+      <span class="color-dot" style="background:#dd8822;box-shadow:0 0 8px rgba(255,170,50,0.5)"></span> Батарея
     </button>
     <button class="tool-btn" data-element="wire" style="--glow:#66aadd">
-      <span class="color-dot" style="background:#667788;box-shadow:0 0 6px rgba(100,170,220,0.3)"></span> Wire
+      <span class="color-dot" style="background:#667788;box-shadow:0 0 6px rgba(100,170,220,0.3)"></span> Кабель
     </button>
     <button class="tool-btn" data-element="switch" style="--glow:#66dd66">
-      <span class="color-dot" style="background:#666677;box-shadow:0 0 6px rgba(100,220,100,0.3)"></span> Switch
+      <span class="color-dot" style="background:#666677;box-shadow:0 0 6px rgba(100,220,100,0.3)"></span> Выключатель
     </button>
     <button class="tool-btn" data-element="led" style="--glow:#ffee66">
-      <span class="color-dot" style="background:#887744;box-shadow:0 0 6px rgba(255,238,100,0.3)"></span> LED
+      <span class="color-dot" style="background:#887744;box-shadow:0 0 6px rgba(255,238,100,0.3)"></span> Лампочка
     </button>
     <button class="tool-btn" data-element="heater" style="--glow:#ff5533">
-      <span class="color-dot" style="background:#993333;box-shadow:0 0 6px rgba(255,80,50,0.3)"></span> Heater
+      <span class="color-dot" style="background:#993333;box-shadow:0 0 6px rgba(255,80,50,0.3)"></span> Нагреватель
     </button>
     <button class="tool-btn" data-element="steamgen" style="--glow:#4488cc">
-      <span class="color-dot" style="background:#556688;box-shadow:0 0 8px rgba(60,140,220,0.5)"></span> Steam Gen
+      <span class="color-dot" style="background:#556688;box-shadow:0 0 8px rgba(60,140,220,0.5)"></span> Парогенератор
     </button>
   </div>
 
   <div class="tools-group">
-    <label>Energy</label>
+    <label>Энергия</label>
     <button class="tool-btn" data-element="turbine" style="--glow:#66ddff">
-      <span class="color-dot" style="background:#4488aa;box-shadow:0 0 8px rgba(100,220,255,0.5)"></span> Turbine
+      <span class="color-dot" style="background:#4488aa;box-shadow:0 0 8px rgba(100,220,255,0.5)"></span> Турбина
     </button>
     <button class="tool-btn" data-element="cooler" style="--glow:#88ddff">
-      <span class="color-dot" style="background:#3388bb;box-shadow:0 0 8px rgba(130,220,255,0.5)"></span> Cooler
+      <span class="color-dot" style="background:#3388bb;box-shadow:0 0 8px rgba(130,220,255,0.5)"></span> Охладитель
     </button>
   </div>
 
   <div class="tools-group">
-    <label>Mechanics</label>
+    <label>Механика</label>
     <button class="tool-btn" data-element="piston" style="--glow:#dd9966">
-      <span class="color-dot" style="background:#996644;box-shadow:0 0 6px rgba(220,150,100,0.4)"></span> Piston
+      <span class="color-dot" style="background:#996644;box-shadow:0 0 6px rgba(220,150,100,0.4)"></span> Поршень
     </button>
     <button class="tool-btn" data-element="sensor" style="--glow:#99ddff">
-      <span class="color-dot" style="background:#5599bb;box-shadow:0 0 8px rgba(150,220,255,0.5)"></span> Sensor
+      <span class="color-dot" style="background:#5599bb;box-shadow:0 0 8px rgba(150,220,255,0.5)"></span> Сенсор
     </button>
   </div>
 
   <div class="tools-group">
-    <label>Biology</label>
+    <label>Биология</label>
     <button class="tool-btn" data-element="seeds" style="--glow:#66dd66">
-      <span class="color-dot" style="background:#44aa44;box-shadow:0 0 6px rgba(100,220,100,0.4)"></span> Seeds
+      <span class="color-dot" style="background:#44aa44;box-shadow:0 0 6px rgba(100,220,100,0.4)"></span> Семена
     </button>
     <button class="tool-btn" data-element="spore" style="--glow:#cc66dd">
-      <span class="color-dot" style="background:#8844aa;box-shadow:0 0 8px rgba(200,100,220,0.5)"></span> Spore
+      <span class="color-dot" style="background:#8844aa;box-shadow:0 0 8px rgba(200,100,220,0.5)"></span> Споры
     </button>
   </div>
 
   <div class="tools-group">
-    <label>Utility</label>
+    <label>Утилиты</label>
     <button class="tool-btn" data-element="steam" style="--glow:#ccdddd">
-      <span class="color-dot" style="background:#ccdddd;box-shadow:0 0 6px rgba(200,210,220,0.3)"></span> Steam
+      <span class="color-dot" style="background:#ccdddd;box-shadow:0 0 6px rgba(200,210,220,0.3)"></span> Пар
     </button>
     <button class="tool-btn" data-element="ash" style="--glow:#aaa99a">
-      <span class="color-dot" style="background:#aaa99a;box-shadow:0 0 6px rgba(160,155,150,0.3)"></span> Ash
+      <span class="color-dot" style="background:#aaa99a;box-shadow:0 0 6px rgba(160,155,150,0.3)"></span> Пепел
     </button>
     <button class="tool-btn" data-element="source" style="--glow:#55ccff">
-      <span class="color-dot" style="background:#55ccff;box-shadow:0 0 8px rgba(80,200,255,0.5)"></span> Source
+      <span class="color-dot" style="background:#55ccff;box-shadow:0 0 8px rgba(80,200,255,0.5)"></span> Источник
     </button>
     <button class="tool-btn" data-element="mover" style="--glow:#00cccc">
-      <span class="color-dot" style="background:#00cccc;box-shadow:0 0 8px rgba(0,204,204,0.5)"></span> Move
+      <span class="color-dot" style="background:#00cccc;box-shadow:0 0 8px rgba(0,204,204,0.5)"></span> Движок
     </button>
     <button class="tool-btn" data-element="smoke" style="--glow:#888888">
-      <span class="color-dot" style="background:#888888;box-shadow:0 0 6px rgba(130,130,135,0.3)"></span> Smoke
+      <span class="color-dot" style="background:#888888;box-shadow:0 0 6px rgba(130,130,135,0.3)"></span> Дым
     </button>
   </div>
 
   <div class="tools-group" id="brush-group">
-    <label>Brush</label>
+    <label>Кисть</label>
     <input type="range" id="brush-slider" min="1" max="12" value="3">
     <span id="brush-value">3</span>
   </div>
 
   <div class="tools-group" id="speed-group">
-    <label>Speed</label>
+    <label>Скорость</label>
     <input type="range" id="speed-slider" min="1" max="20" value="10" step="1">
     <span id="speed-value">1.0x</span>
   </div>
 
   <div class="tools-group">
-    <label>Multiplayer</label>
-    <button id="host-btn" class="tool-btn" style="--glow:#44ff44;border-color:#226622">
-      <span class="color-dot" style="background:#44ff44;box-shadow:0 0 8px rgba(68,255,68,0.4)"></span> Host
-    </button>
-    <button id="join-btn" class="tool-btn" style="--glow:#4488ff;border-color:#224488">
-      <span class="color-dot" style="background:#4488ff;box-shadow:0 0 8px rgba(68,136,255,0.4)"></span> Join
-    </button>
-    <input id="mp-link-input" type="text" placeholder="Paste link here..." style="width:100%;background:#111;color:#8cf;border:1px solid #333;border-radius:4px;font-size:10px;padding:4px;outline:none">
-    <button id="mp-connect-btn" style="width:100%;padding:4px;background:#1a1a3a;border:1px solid #444;border-radius:4px;color:#8cf;font-size:11px;cursor:pointer">Connect</button>
-    <div id="mp-status" style="font-size:10px;color:#666;text-align:center;margin-top:2px;word-break:break-all">Offline</div>
-    <button id="mp-copy-btn" style="width:100%;padding:4px;background:#1a1a2a;border:1px solid #444;border-radius:4px;color:#8cf;font-size:10px;cursor:pointer;display:none">Copy Link</button>
+    <label>Мультиплеер</label>
+    <div id="mp-status" style="font-size:10px;color:#666;text-align:center;margin-top:2px">Подключение...</div>
   </div>
 
-  <button id="pause-btn" style="padding:8px;background:#1a1a2a;border:1px solid #442266;border-radius:6px;color:#aa88dd;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:4px;transition:all 0.2s;">Pause (Space)</button>
-  <button id="clear-btn">Clear All</button>
+  <button id="pause-btn" style="padding:8px;background:#1a1a2a;border:1px solid #442266;border-radius:6px;color:#aa88dd;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:4px;transition:all 0.2s;">Пауза (Пробел)</button>
+  <button id="clear-btn">Очистить всё</button>
   <div id="fps-counter">-- FPS</div>
 </div>
 
@@ -395,6 +384,17 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = COLS;
 canvas.height = ROWS;
+
+function resizeCanvas() {
+  const container = canvas.parentElement;
+  const maxW = container.clientWidth;
+  const maxH = container.clientHeight;
+  const scale = Math.min(maxW / COLS, maxH / ROWS);
+  canvas.style.width = Math.floor(COLS * scale) + 'px';
+  canvas.style.height = Math.floor(ROWS * scale) + 'px';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 const glowCanvas = document.createElement('canvas');
 const gctx = glowCanvas.getContext('2d');
@@ -970,7 +970,7 @@ canvas.addEventListener('mousemove', (e) => {
   if (isMouseDown) {
     const { mx, my } = canvasCoords(e);
     placeAtMouse(mx, my);
-    sendMP({ type: 'cursor', mx, my });
+    sendWS({ type: 'cursor', x: mx, y: my });
   }
 });
 canvas.addEventListener('mouseup',   () => { isMouseDown = false; });
@@ -978,20 +978,14 @@ canvas.addEventListener('mouseleave', () => { isMouseDown = false; });
 
 canvas.addEventListener('touchstart', (e) => {
   e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const touch = e.touches[0];
-  const mx = (touch.clientX - rect.left) * canvas.width / rect.width;
-  const my = (touch.clientY - rect.top)  * canvas.height / rect.height;
+  const { mx, my } = canvasCoords(e.touches[0]);
   isMouseDown = true;
   placeAtMouse(mx, my);
 }, { passive: false });
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   if (isMouseDown) {
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const mx = (touch.clientX - rect.left) * canvas.width / rect.width;
-    const my = (touch.clientY - rect.top)  * canvas.height / rect.height;
+    const { mx, my } = canvasCoords(e.touches[0]);
     placeAtMouse(mx, my);
   }
 }, { passive: false });
@@ -1336,17 +1330,15 @@ function updateCell(x, y, cell) {
         }
       }
       if (hasSteam) {
-        // Turbine is spinning — generate power
         cell.powered = true;
-        cell.life = 20;
+        cell.life = 120;
       } else if (cell.powered) {
         cell.life--;
         if (cell.life <= 0) cell.powered = false;
       }
-      // Also accept power from neighbors (to chain turbines)
       if (!cell.powered && checkPowerNeighbor(x, y)) {
         cell.powered = true;
-        cell.life = 5;
+        cell.life = 120;
       }
       break;
     }
@@ -2069,32 +2061,17 @@ function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
 }
 
-// ----- Multiplayer (native WebRTC, no libraries) -----
-var mpPC = null;         // RTCPeerConnection
-var mpDC = null;         // RTCDataChannel
-var mpRole = null;       // 'host' or 'join'
+// ----- Multiplayer (WebSocket, no WebRTC) -----
+var mpWS = null;
 var mpConnected = false;
-var mpMakingOffer = false;
 var friendCursor = null;
 var friendCursorTimer = 0;
 var mpStatus = document.getElementById('mp-status');
-var mpLinkInput = document.getElementById('mp-link-input');
-var mpConnectBtn = document.getElementById('mp-connect-btn');
-var mpCopyBtn = document.getElementById('mp-copy-btn');
-var mpLocalSignal = null; // store our offer/answer for localStorage
-var ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+var WS_URL = (function(){ var m = location.search.match(/[?&]server=([^&]+)/); if (m) return decodeURIComponent(m[1]); var s = localStorage.getItem('ws_url'); if (s) return s; if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host; return 'ws://localhost:3000'; })();
 
 function mpLog(msg, color) {
   mpStatus.textContent = msg;
   if (color) mpStatus.style.color = color;
-}
-
-function sigEncode(obj) {
-  var json = JSON.stringify(obj);
-  return btoa(encodeURIComponent(json));
-}
-function sigDecode(str) {
-  return JSON.parse(decodeURIComponent(atob(str)));
 }
 
 function getGridData() {
@@ -2127,303 +2104,131 @@ function loadGridData(data) {
     }
   }
 }
-function sendMP(msg) {
-  if (mpDC && mpDC.readyState === 'open') {
-    try { mpDC.send(JSON.stringify(msg)); } catch(e) { console.error(e); }
+function sendWS(msg) {
+  if (mpWS && mpWS.readyState === WebSocket.OPEN) {
+    try { mpWS.send(JSON.stringify(msg)); } catch(e) { console.error(e); }
   }
 }
-function mpCleanup() {
-  if (mpDC) { try { mpDC.close(); } catch(e) {} mpDC = null; }
-  if (mpPC) { try { mpPC.close(); } catch(e) {} mpPC = null; }
-  mpRole = null; mpConnected = false; friendCursor = null; mpLocalSignal = null;
-}
 
-// Create a peer connection and start offer/answer
-function createPC(isInitiator, remoteSignal) {
-  if (mpPC) mpCleanup();
-  mpLog(isInitiator ? 'Creating offer...' : 'Creating answer...', '#aa8');
+function connectMP() {
+  if (mpWS) try { mpWS.close(); } catch(e) {}
+  mpWS = new WebSocket(WS_URL);
 
-  try {
-    mpPC = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-  } catch(e) {
-    mpLog('WebRTC not supported: ' + e.message, '#f44');
-    return null;
-  }
-
-  // Data channel
-  if (isInitiator) {
-    mpDC = mpPC.createDataChannel('sandbox', { ordered: true });
-    mpDC.onopen = onConnected;
-    mpDC.onmessage = onData;
-    mpDC.onclose = onDisconnect;
-  } else {
-    mpPC.ondatachannel = function(e) {
-      mpDC = e.channel;
-      mpDC.onopen = onConnected;
-      mpDC.onmessage = onData;
-      mpDC.onclose = onDisconnect;
-    };
-  }
-
-  // When remote signal arrives, set it after we create our offer/answer
-  var remoteReceived = false;
-  var ourSignalReady = null; // function to call when our signal is ready
-
-  // Gather ICE candidates and emit final signal when done
-  var candidates = [];
-  var gatheringComplete = false;
-  var localDescSet = false;
-
-  function emitSignal() {
-    if (!localDescSet) return;
-    if (!gatheringComplete) return;
-    var signal = { type: mpPC.localDescription.type, sdp: mpPC.localDescription.sdp, candidates: candidates };
-    mpLocalSignal = signal;
-    var compressed = sigEncode(signal);
-    if (isInitiator) {
-      localStorage.setItem('mp_offer', compressed);
-      var url = location.origin + location.pathname + '#s=' + compressed;
-      location.hash = 's=' + compressed;
-      mpLog('Send this link to your friend!', '#4f4');
-      mpLinkInput.value = url;
-      mpLinkInput.style.display = 'block';
-      mpCopyBtn.style.display = 'block';
-      navigator.clipboard.writeText(url).catch(function(){});
-    } else {
-      var url = location.origin + location.pathname + '#a=' + compressed;
-      location.hash = 'a=' + compressed;
-      mpLog('Send this link BACK to the host!', '#4f4');
-      mpLinkInput.value = url;
-      mpLinkInput.style.display = 'block';
-      mpCopyBtn.style.display = 'block';
-      navigator.clipboard.writeText(url).catch(function(){});
-    }
-    // If remote signal was already received, process it
-    if (remoteSignal && !remoteReceived) {
-      remoteReceived = true;
-      processRemote(remoteSignal);
-    }
-  }
-
-  mpPC.onicecandidate = function(e) {
-    if (e.candidate) {
-      candidates.push(e.candidate.candidate);
-    } else {
-      gatheringComplete = true;
-      emitSignal();
-    }
-  };
-
-  mpPC.oniceconnectionstatechange = function() {
-    if (mpPC.iceConnectionState === 'failed' || mpPC.iceConnectionState === 'disconnected') {
-      mpLog('Connection ' + mpPC.iceConnectionState, '#f44');
-    }
-  };
-
-  // Timeout for ICE gathering (5s)
-  var iceTimer = setTimeout(function() {
-    if (!gatheringComplete) {
-      gatheringComplete = true;
-      emitSignal();
-    }
-  }, 5000);
-
-  // Create offer or answer
-  if (isInitiator) {
-    mpPC.createOffer().then(function(offer) {
-      return mpPC.setLocalDescription(offer);
-    }).then(function() {
-      localDescSet = true;
-      emitSignal();
-    }).catch(function(e) {
-      mpLog('Offer error: ' + e.message, '#f44');
-    });
-  } else {
-    // For non-initiator, we need remote signal first
-    if (remoteSignal) {
-      processRemote(remoteSignal);
-    }
-  }
-
-  function processRemote(signal) {
-    // Set remote description and create answer
-    var desc = new RTCSessionDescription({ type: signal.type, sdp: signal.sdp });
-    mpPC.setRemoteDescription(desc).then(function() {
-      return mpPC.createAnswer();
-    }).then(function(answer) {
-      return mpPC.setLocalDescription(answer);
-    }).then(function() {
-      localDescSet = true;
-      emitSignal();
-    }).catch(function(e) {
-      mpLog('Answer error: ' + e.message, '#f44');
-    });
-  }
-
-  // If remote signal was provided as argument, process it
-  if (remoteSignal) {
-    processRemote(remoteSignal);
-  }
-
-  function onConnected() {
+  mpWS.onopen = function() {
     mpConnected = true;
-    mpLog('Connected!', '#4f4');
-    mpLinkInput.style.display = 'none';
-    mpCopyBtn.style.display = 'none';
-    mpConnectBtn.style.display = 'none';
-    if (mpRole === 'host') {
-      setTimeout(function() { sendMP({ type: 'sync', data: getGridData() }); }, 200);
-    }
-  }
-  function onData(e) {
-    try {
-      var d = JSON.parse(e.data);
-      if (d.type === 'sync' && mpRole === 'join') { loadGridData(d.data); mpLog('World loaded!', '#4f4'); return; }
-      if (d.type === 'place') { spawnBrushAt(d.mx, d.my, d.element); return; }
-      if (d.type === 'cursor') { friendCursor = { x: d.mx, y: d.my }; friendCursorTimer = 60; return; }
-    } catch(e) { console.error(e); }
-  }
-  function onDisconnect() {
-    if (mpConnected) { mpLog('Disconnected', '#644'); mpConnected = false; }
-  }
+    mpLog('Подключено к серверу', '#4f4');
+  };
 
-  return mpPC;
+  mpWS.onmessage = function(e) {
+    var msg;
+    try { msg = JSON.parse(e.data); } catch(e) { return; }
+    switch (msg.type) {
+      case 'sync': {
+        initGrid();
+        if (msg.data && msg.data.length) loadGridData(msg.data);
+        mpLog('Мир загружен (' + (msg.data ? msg.data.length : 0) + ' ячеек)', '#8cf');
+        break;
+      }
+      case 'place': {
+        if (!msg.cell) break;
+        if (msg.cell.type === null || msg.cell.type === undefined) {
+          setCell(msg.cell.x, msg.cell.y, null);
+        } else {
+          var c = { type: msg.cell.type, seed: msg.cell.seed || Math.random()*256|0, temp: msg.cell.temp || 0 };
+          if (msg.cell.type === 'battery' || msg.cell.type === 'wire' || msg.cell.type === 'switch' || msg.cell.type === 'led' || msg.cell.type === 'heater' || msg.cell.type === 'steamgen' || msg.cell.type === 'turbine' || msg.cell.type === 'piston' || msg.cell.type === 'sensor') {
+            c.powered = !!msg.cell.powered; c.life = msg.cell.life || 0;
+          }
+          if (msg.cell.type === 'switch') c.active = !!msg.cell.active;
+          if (msg.cell.type === 'piston') { c.dir = msg.cell.dir || -1; c.extended = !!msg.cell.extended; }
+          setCell(msg.cell.x, msg.cell.y, c);
+        }
+        break;
+      }
+      case 'cursor': {
+        friendCursor = { x: msg.x, y: msg.y };
+        friendCursorTimer = 60;
+        break;
+      }
+      case 'clear': {
+        initGrid();
+        break;
+      }
+    }
+  };
+
+  mpWS.onclose = function() {
+    mpConnected = false;
+    mpLog('Отключено от сервера', '#644');
+    setTimeout(connectMP, 3000);
+  };
+
+  mpWS.onerror = function() {
+    mpLog('Ошибка соединения', '#f44');
+  };
 }
 
-// Process remote signal and feed it to existing PC
-function feedRemote(signal) {
-  if (!mpPC) return;
-  var desc = new RTCSessionDescription({ type: signal.type, sdp: signal.sdp });
-  mpPC.setRemoteDescription(desc).catch(function(e) {
-    mpLog('Signal error: ' + e.message, '#f44');
-  });
-  // Add ICE candidates
-  if (signal.candidates) {
-    for (var i = 0; i < signal.candidates.length; i++) {
-      try {
-        mpPC.addIceCandidate(new RTCIceCandidate({ candidate: signal.candidates[i] }));
-      } catch(e) {}
+// Auto-connect on page load
+setTimeout(connectMP, 1000);
+
+// Override spawnBrushAt to sync via WebSocket
+var origSpawnBrushAt = spawnBrushAt;
+spawnBrushAt = function(mx, my, element) {
+  origSpawnBrushAt(mx, my, element);
+  // Send brush area cells to server
+  var cx = Math.floor(mx), cy = Math.floor(my);
+  var half = Math.floor(brushSize / 2);
+  for (var dy = 0; dy < brushSize; dy++) {
+    for (var dx = 0; dx < brushSize; dx++) {
+      var px = cx + dx - half, py = cy + dy - half;
+      if (brushSize > 2) {
+        var dist = Math.abs(dx - half) + Math.abs(dy - half);
+        if (dist > half && Math.random() > 0.4) continue;
+      }
+      var c = getCell(px, py);
+      if (c) sendCell(px, py, c);
     }
   }
+  // Send fire extras
+  if (element === 'fire' && brushSize >= 2) {
+    for (var i = 0; i < brushSize * 2; i++) {
+      var ox = cx + Math.floor(Math.random() * brushSize) - half;
+      var oy = cy + Math.floor(Math.random() * brushSize) - half;
+      var fp = getCell(ox, oy);
+      if (fp) sendCell(ox, oy, fp);
+    }
+  }
+};
+function sendCell(x, y, c) {
+  if (!c || !c.type) return;
+  var d = { x: x, y: y, type: c.type, seed: c.seed, temp: c.temp || 0 };
+  if (c.type === 'battery' || c.type === 'wire' || c.type === 'switch' || c.type === 'led' || c.type === 'heater' || c.type === 'steamgen' || c.type === 'turbine' || c.type === 'piston' || c.type === 'sensor') {
+    d.powered = !!c.powered; d.life = c.life || 0;
+  }
+  if (c.type === 'switch') d.active = !!c.active;
+  if (c.type === 'piston') { d.dir = c.dir || -1; d.extended = !!c.extended; }
+  sendWS({ type: 'place', cell: d });
 }
 
-// Host button
-document.getElementById('host-btn').addEventListener('click', function() {
-  mpCleanup();
-  mpRole = 'host';
-  mpLinkInput.value = ''; mpLinkInput.style.display = 'none';
-  mpCopyBtn.style.display = 'none';
-  mpConnectBtn.style.display = 'block';
-  createPC(true, null);
-});
-
-// Join button
-document.getElementById('join-btn').addEventListener('click', function() {
-  var hash = location.hash;
-  if (hash.indexOf('#s=') === 0) {
-    try {
-      var raw = hash.slice(3);
-      var signal = sigDecode(raw);
-      mpRole = 'join';
-      mpLinkInput.style.display = 'none';
-      mpCopyBtn.style.display = 'none';
-      mpConnectBtn.style.display = 'none';
-      createPC(false, signal);
-    } catch(e) {
-      mpLog('Parse error: ' + e.message, '#f44');
-    }
-  } else if (hash.indexOf('#a=') === 0) {
-    // Answer URL - try to reconstruct with stored offer
-    var stored = localStorage.getItem('mp_offer');
-    if (stored) {
-      try {
-        var offerSignal = sigDecode(stored);
-        var raw = hash.slice(3);
-        var answerSignal = sigDecode(raw);
-        mpRole = 'host';
-        mpLinkInput.style.display = 'none';
-        mpCopyBtn.style.display = 'none';
-        mpConnectBtn.style.display = 'none';
-        createPC(true, offerSignal); // recreate with stored offer
-        setTimeout(function() {
-          if (mpPC) feedRemote(answerSignal);
-        }, 3000); // wait for PC to be ready
-      } catch(e) { mpLog('Reconnect error: ' + e.message, '#f44'); }
-    } else {
-      mpLog('Paste answer link in field & click Connect', '#aa8');
-      mpLinkInput.value = location.href;
-      mpLinkInput.style.display = 'block';
-      mpConnectBtn.style.display = 'block';
-    }
-  } else {
-    mpLog('Open host link first, then click Join', '#aa8');
-    mpLinkInput.value = ''; mpLinkInput.style.display = 'block';
-    mpConnectBtn.style.display = 'block';
-  }
-});
-
-// Connect button
-mpConnectBtn.addEventListener('click', function() {
-  var input = mpLinkInput.value.trim();
-  if (!input) return;
-  try {
-    var url = new URL(input);
-    var hash = url.hash || '';
-    var compressed = '';
-    if (hash.indexOf('#a=') === 0) compressed = hash.slice(3);
-    else if (hash.indexOf('#s=') === 0) compressed = hash.slice(3);
-    else { mpLog('Link must have #a= or #s=', '#f44'); return; }
-    var signal = sigDecode(compressed);
-    if (mpRole === 'host' && mpPC) {
-      feedRemote(signal);
-      mpLog('Answer applied!', '#4f4');
-    } else if (hash.indexOf('#s=') === 0) {
-      mpRole = 'join';
-      if (mpPC) feedRemote(signal);
-      else createPC(false, signal);
-    } else {
-      mpLog('Click Host first, then paste answer', '#f44');
-    }
-    mpLinkInput.value = '';
-  } catch(e) {
-    mpLog('Invalid link: ' + e.message, '#f44');
-  }
-});
-
-mpCopyBtn.addEventListener('click', function() {
-  var val = mpLinkInput.value;
-  if (val) { navigator.clipboard.writeText(val).catch(function(){}); mpLog('Copied!', '#8cf'); }
-});
-
-// Auto-detect on load
-(function() {
-  var hash = location.hash;
-  if (hash.indexOf('#s=') === 0) {
-    mpLog('Link detected. Click Join.', '#aa8');
-    mpLinkInput.value = location.href;
-    mpLinkInput.style.display = 'block';
-  } else if (hash.indexOf('#a=') === 0) {
-    mpLog('Answer link detected. Click Join or Connect.', '#aa8');
-    mpLinkInput.value = location.href;
-    mpLinkInput.style.display = 'block';
-    mpConnectBtn.style.display = 'block';
-    var stored = localStorage.getItem('mp_offer');
-    if (stored) {
-      mpLog('Found stored offer, reconnecting...', '#aa8');
-      setTimeout(function() { document.getElementById('join-btn').click(); }, 500);
-    }
-  }
-})();
-
-// Override placeAtMouse for sync
+// Override placeAtMouse for switch toggle sync
+var origPlaceAtMouse = placeAtMouse;
 placeAtMouse = function(mx, my) {
   var cx = Math.floor(mx), cy = Math.floor(my);
   if (selectedElement === 'switch') {
     var cell = getCell(cx, cy);
-    if (cell && cell.type === 'switch') { cell.active = !cell.active; sendMP({ type: 'place', mx: mx, my: my, element: selectedElement }); return; }
+    if (cell && cell.type === 'switch') {
+      cell.active = !cell.active;
+      sendCell(cx, cy, cell);
+      return;
+    }
   }
-  spawnBrushAt(mx, my, selectedElement);
-  sendMP({ type: 'place', mx: mx, my: my, element: selectedElement });
+  origPlaceAtMouse(mx, my);
+};
+
+// Clear button also sends via server
+var originalClear = clearGrid;
+clearGrid = function() {
+  initGrid();
+  sendWS({ type: 'clear' });
 };
 
 // Pause controls
@@ -2432,7 +2237,7 @@ document.getElementById('pause-btn').addEventListener('click', () => {
   if (!paused) updateAccum = 0;
   document.getElementById('pause-btn').style.borderColor = paused ? '#8844aa' : '#442266';
   document.getElementById('pause-btn').style.color = paused ? '#cc88ff' : '#aa88dd';
-  document.getElementById('pause-btn').textContent = paused ? 'Resume (Space)' : 'Pause (Space)';
+  document.getElementById('pause-btn').textContent = paused ? 'Продолжить (Пробел)' : 'Пауза (Пробел)';
 });
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space') {
