@@ -316,6 +316,10 @@
     </button>
   </div>
 
+  <div class="tools-group">
+    <button id="spawn-player-btn" style="padding:8px;background:#1a1a2a;border:1px solid #448;border-radius:6px;color:#88ddff;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all 0.2s;">👤 Игрок</button>
+  </div>
+
   <div style="font-size:10px;color:#666;text-align:center;padding:4px;border:1px solid #1a1a2a;border-radius:4px;margin-top:2px">ПКМ — Стереть | ЛКМ — Строить</div>
 
   <div class="tools-group">
@@ -470,6 +474,9 @@ let missionType = '';
 let chatLog = [];
 let meteorCountdown = 0;
 let teslaArcs = [];
+let player = null;
+let friendPlayer = null;
+let keys = {};
 
 // ----- Grid -----
 let grid = [];
@@ -1265,6 +1272,43 @@ function render() {
     ctx.stroke();
     ctx.restore();
   }
+
+  // Local player
+  if (player) {
+    drawPlayer(ctx, player.x, player.y, player.dir, player.seed, 1);
+  }
+  // Remote player
+  if (friendPlayer) {
+    drawPlayer(ctx, friendPlayer.x, friendPlayer.y, friendPlayer.dir || 1, friendPlayer.seed || 0, 0.6);
+  }
+}
+
+function drawPlayer(ctx, px, py, dir, seed, alpha) {
+  const ix = Math.floor(px);
+  const iy = Math.floor(py);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Body colors
+  const skin = 'rgb(255,200,150)';
+  const shirt = seed % 2 === 0 ? 'rgb(60,120,200)' : 'rgb(200,80,60)';
+  const pants = 'rgb(60,60,80)';
+  const eyes = seed % 3 === 0 ? '#44ff44' : '#ffffff';
+
+  // Head (2x2)
+  ctx.fillStyle = skin;
+  ctx.fillRect(ix, iy - 3, 3, 2);
+  // Eyes
+  ctx.fillStyle = eyes;
+  ctx.fillRect(ix + (dir > 0 ? 2 : 0), iy - 3, 1, 1);
+  // Body (2x2)
+  ctx.fillStyle = shirt;
+  ctx.fillRect(ix, iy - 1, 3, 2);
+  // Legs (2x1)
+  ctx.fillStyle = pants;
+  ctx.fillRect(ix, iy + 1, 3, 1);
+
+  ctx.restore();
 }
 
 // ----- Element Spawning -----
@@ -1644,6 +1688,29 @@ clearGrid = function() {
   initGrid();
   sendWS({ type: 'clear' });
 };
+
+// Spawn player button
+document.getElementById('spawn-player-btn').addEventListener('click', () => {
+  const btn = document.getElementById('spawn-player-btn');
+  if (player) {
+    player = null;
+    sendWS({ type: 'player_despawn' });
+    btn.style.borderColor = '#448';
+    btn.style.color = '#88ddff';
+    btn.style.boxShadow = 'none';
+    btn.textContent = '👤 Игрок';
+    return;
+  }
+  if (mouseOverCanvas && mouseX >= 0 && mouseY >= 0) {
+    spawnPlayerAt(mouseX, mouseY);
+  } else {
+    spawnPlayerAt(COLS / 2, ROWS / 2);
+  }
+  btn.style.borderColor = '#88ddff';
+  btn.style.color = '#88ddff';
+  btn.style.boxShadow = '0 0 10px rgba(100,220,255,0.3)';
+  btn.textContent = '👤 Игрок (вкл)';
+});
 
 // Meteor button
 document.getElementById('meteor-btn').addEventListener('click', () => {
@@ -3215,6 +3282,113 @@ function updateCell(x, y, cell) {
   }
 }
 
+// ----- Player Entity -----
+function spawnPlayerAt(mx, my) {
+  const x = Math.floor(mx);
+  const y = Math.floor(my);
+  player = { x: x, y: y, vx: 0, vy: 0, onGround: false, dir: 1, seed: Math.floor(Math.random() * 256), active: true };
+  sendWS({ type: 'player_spawn', x: x, y: y, seed: player.seed });
+}
+
+function updatePlayer() {
+  if (!player) return;
+
+  const p = player;
+  const speed = 1.2;
+  const jumpPower = -3.5;
+  const gravity = 0.25 * gravityFactor;
+  const w = 3, h = 4; // player hitbox 3x4
+
+  const ix = Math.round(p.x);
+  const iy = Math.round(p.y);
+
+  // Input
+  let moveX = 0;
+  if (keys['ArrowLeft'] || keys['KeyA']) moveX = -1;
+  if (keys['ArrowRight'] || keys['KeyD']) moveX = 1;
+  if (moveX !== 0) p.dir = moveX;
+
+  // Jump
+  if ((keys['ArrowUp'] || keys['KeyW']) && p.onGround) {
+    p.vy = jumpPower;
+    p.onGround = false;
+  }
+
+  // Horizontal movement with collision
+  const newVx = moveX * speed;
+  const hStep = newVx * 0.5; // sub-step for smoother collision
+  const hTarget = p.x + hStep;
+  let canMoveH = true;
+  for (let dy = 0; dy < h; dy++) {
+    const checkY = iy + dy;
+    const checkX = hTarget > p.x ? Math.floor(p.x + w) : Math.floor(p.x);
+    if (checkY < 0 || checkY >= ROWS) continue;
+    const cx = Math.floor(checkX + (hStep > 0 ? 0 : -1));
+    const cell = getCell(cx, checkY);
+    if (cell && isSolid(cell.type)) { canMoveH = false; break; }
+  }
+  if (canMoveH) {
+    p.x += hStep;
+    p.vx = newVx;
+  } else {
+    p.vx = 0;
+  }
+  p.x = Math.max(0, Math.min(COLS - w, p.x));
+
+  // Gravity
+  p.vy += gravity;
+  if (p.vy > 4) p.vy = 4;
+
+  // Vertical movement with collision
+  const vStep = p.vy;
+  const vTarget = p.y + vStep;
+  p.onGround = false;
+  let canMoveV = true;
+  for (let dx = 0; dx < w; dx++) {
+    const checkX = ix + dx;
+    const checkY = vStep > 0 ? Math.floor(p.y + h) : Math.floor(p.y);
+    if (checkX < 0 || checkX >= COLS) continue;
+    const cy = checkY + (vStep > 0 ? 0 : -1);
+    const cell = getCell(checkX, cy);
+    if (cell && isSolid(cell.type)) { canMoveV = false; if (vStep > 0) p.onGround = true; break; }
+  }
+  if (canMoveV) {
+    p.y += vStep;
+  } else {
+    if (vStep > 0) p.onGround = true;
+    p.vy = 0;
+  }
+  p.y = Math.max(0, Math.min(ROWS - h, p.y));
+
+  // Interaction with elements: push through non-solids, take damage from fire/lava/acid
+  for (let dx = 0; dx < w; dx++) {
+    for (let dy = 0; dy < h; dy++) {
+      const cx = Math.floor(p.x) + dx;
+      const cy = Math.floor(p.y) + dy;
+      if (!inBounds(cx, cy)) continue;
+      const c = getCell(cx, cy);
+      if (!c) continue;
+      // Push movable elements (sand, water, etc.) out of the way
+      if (!isSolid(c.type) && c.type !== 'fire' && c.type !== 'smoke' && c.type !== 'steam' && c.type !== 'lava') {
+        const pushDirs = [[1,0],[-1,0],[0,-1],[0,1]];
+        for (const [pdx, pdy] of pushDirs) {
+          const nx = cx + pdx, ny = cy + pdy;
+          if (isEmpty(nx, ny)) { moveCell(cx, cy, nx, ny); break; }
+        }
+      }
+    }
+  }
+
+  // Send position to server
+  if (Math.random() < 0.1) {
+    sendWS({ type: 'player_move', x: p.x, y: p.y, dir: p.dir });
+  }
+}
+
+function isSolid(type) {
+  return type === 'wall' || type === 'stone' || type === 'wood' || type === 'battery' || type === 'wire' || type === 'heatwire' || type === 'switch' || type === 'led' || type === 'heater' || type === 'steamgen' || type === 'turbine' || type === 'cooler' || type === 'piston' || type === 'sensor' || type === 'c4' || type === 'fuse' || type === 'source' || type === 'mover' || type === 'tesla' || type === 'portal_blue' || type === 'portal_orange' || type === 'ice' || type === 'button' || type === 'seeds';
+}
+
 // ----- Main Loop -----
 let frameCount = 0;
 let fpsTimer = 0;
@@ -3260,6 +3434,7 @@ function gameLoop(timestamp) {
     runUpdatePass();
   }
 
+  if (player && !paused) updatePlayer();
   render();
   requestAnimationFrame(gameLoop);
 }
@@ -3436,6 +3611,18 @@ function connectMP() {
         }
         break;
       }
+      case 'player_spawn': {
+        friendPlayer = { x: msg.x, y: msg.y, dir: 1, seed: msg.seed || 0 };
+        break;
+      }
+      case 'player_despawn': {
+        friendPlayer = null;
+        break;
+      }
+      case 'player_move': {
+        if (friendPlayer) { friendPlayer.x = msg.x; friendPlayer.y = msg.y; friendPlayer.dir = msg.dir || 1; }
+        break;
+      }
     }
   };
 
@@ -3550,10 +3737,16 @@ document.getElementById('pause-btn').addEventListener('click', () => {
   document.getElementById('pause-btn').textContent = paused ? 'Продолжить (Пробел)' : 'Пауза (Пробел)';
 });
 document.addEventListener('keydown', (e) => {
+  keys[e.code] = true;
   if (e.code === 'Space') {
     e.preventDefault();
     document.getElementById('pause-btn').click();
   }
+  // Prevent scrolling with arrow keys
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+});
+document.addEventListener('keyup', (e) => {
+  keys[e.code] = false;
 });
 
 // ----- Start -----
