@@ -249,6 +249,9 @@
     <button class="tool-btn" data-element="tesla" style="--glow:#66aaff">
       <span class="color-dot" style="background:#4488dd;box-shadow:0 0 10px rgba(100,170,255,0.6)"></span> Катушка Теслы
     </button>
+    <button class="tool-btn" data-element="button" style="--glow:#cc3333">
+      <span class="color-dot" style="background:#881111;box-shadow:0 0 8px rgba(200,50,50,0.5)"></span> Кнопка
+    </button>
   </div>
 
   <div class="tools-group">
@@ -313,9 +316,7 @@
     </button>
   </div>
 
-  <div class="tools-group">
-    <button id="eraser-btn" style="padding:8px;background:#1a1a2a;border:1px solid #444;border-radius:6px;color:#aaa;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:2px;transition:all 0.2s;">🧹 Ластик</button>
-  </div>
+  <div style="font-size:10px;color:#666;text-align:center;padding:4px;border:1px solid #1a1a2a;border-radius:4px;margin-top:2px">ЛКМ — Стереть | ПКМ — Строить</div>
 
   <div class="tools-group">
     <label>Маркеры</label>
@@ -438,6 +439,7 @@ const ELEMENT_COLORS = {
   portal_orange: { r: 255, g: 120, b: 40 },
   ice:       { r: 180, g: 210, b: 240 },
   meteor:    { r: 200, g: 60,  b: 30 },
+  button:    { r: 140, g: 30,  b: 30 },
 };
 
 let selectedElement = 'sand';
@@ -447,7 +449,6 @@ let updateAccum = 0;
 const MAX_STEPS_PER_FRAME = 4;
 let explosionFlash = { timer: 0, maxT: 15, x: 0, y: 0, radius: 30 };
 let paused = false;
-let eraserMode = false;
 let zoom = 1;
 let mouseX = -1, mouseY = -1;
 let mouseOverCanvas = false;
@@ -662,12 +663,13 @@ function drawCell(x, y, cell) {
     }
 
     case 'smoke': {
-      const alpha = Math.max(0.05, (cell.life / cell.maxLife)) * 0.45;
-      const drift = Math.sin(cell.seed * 0.1 + cell.life * 0.05) * 8;
+      const lifeFrac = Math.max(0.05, cell.life / cell.maxLife);
+      const alpha = Math.min(0.7, lifeFrac * 0.8);
+      const drift = Math.sin(cell.seed * 0.1 + cell.life * 0.05) * 6;
       const t = cell.temp || 0;
-      const r = 130 + drift + t * 0.05;
-      const g = 130 + drift - t * 0.02;
-      const b = 135 + drift - t * 0.04;
+      const r = 105 + drift + t * 0.03;
+      const g = 100 + drift - t * 0.02;
+      const b = 110 + drift - t * 0.03;
       ctx.fillStyle = `rgba(${r|0},${g|0},${b|0},${alpha})`;
       ctx.fillRect(x, y, 1, 1);
       return false;
@@ -678,6 +680,17 @@ function drawCell(x, y, cell) {
       ctx.fillStyle = `rgb(${0 + pulse|0}, ${204 + pulse * 0.3|0}, ${204 + pulse * 0.3|0})`;
       ctx.fillRect(x, y, 1, 1);
       return true;
+    }
+
+    case 'button': {
+      if (cell.pressed) {
+        ctx.fillStyle = '#ff3333';
+        ctx.fillRect(x, y, 1, 1);
+        return true;
+      }
+      ctx.fillStyle = 'rgb(140,30,30)';
+      ctx.fillRect(x, y, 1, 1);
+      return false;
     }
 
     case 'uranium': {
@@ -1140,26 +1153,53 @@ function render() {
     explosionFlash.timer--;
   }
 
-  // Tesla arcs
+  // Tesla arcs & shocker arcs
   for (let ai = teslaArcs.length - 1; ai >= 0; ai--) {
     const arc = teslaArcs[ai];
     arc.timer--;
     if (arc.timer <= 0) { teslaArcs.splice(ai, 1); continue; }
     const intensity = arc.timer / arc.maxTimer;
-    const branches = 3 + (arc.seed % 4);
-    for (let b = 0; b < branches; b++) {
-      const angle = (b / branches) * Math.PI * 2 + arc.seed * 0.1;
-      const len = 4 + (arc.seed % 8);
-      let lx = arc.x, ly = arc.y;
-      for (let d = 0; d < len; d++) {
-        const nx = lx + Math.round(Math.cos(angle + d * 0.3) * (1 + Math.random() * 0.5));
-        const ny = ly + Math.round(Math.sin(angle + d * 0.3) * (1 + Math.random() * 0.5));
-        if (!inBounds(nx, ny)) break;
-        const alpha = (0.3 + 0.5 * intensity) * (1 - d / len);
-        ctx.fillStyle = `rgba(150,200,255,${alpha})`;
-        ctx.fillRect(nx, ny, 1, 1);
-        lx = nx; ly = ny;
-        if (Math.random() < 0.3) break;
+
+    if (arc.x1 !== undefined) {
+      // Point-to-point zigzag arc (shocker)
+      const segs = arc.segments || 4;
+      ctx.save();
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = 'rgba(0,200,255,0.6)';
+      ctx.strokeStyle = `rgba(150,220,255,${0.5 + 0.4 * intensity})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(arc.x1, arc.y1);
+      for (let s = 0; s <= segs; s++) {
+        const frac = s / segs;
+        const px = arc.x1 + (arc.x2 - arc.x1) * frac + (Math.random() - 0.5) * 2.5;
+        const py = arc.y1 + (arc.y2 - arc.y1) * frac + (Math.random() - 0.5) * 2.5;
+        ctx.lineTo(px, py);
+      }
+      ctx.lineTo(arc.x2, arc.y2);
+      ctx.stroke();
+      ctx.restore();
+    } else if (arc.x !== undefined) {
+      // Radial tesla coil arcs
+      const branches = 3 + (arc.seed % 4);
+      for (let b = 0; b < branches; b++) {
+        const angle = (b / branches) * Math.PI * 2 + arc.seed * 0.1;
+        const len = 4 + (arc.seed % 8);
+        let lx = arc.x, ly = arc.y;
+        ctx.save();
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(100,180,255,0.5)';
+        for (let d = 0; d < len; d++) {
+          const nx = lx + Math.round(Math.cos(angle + d * 0.3) * (1 + Math.random() * 0.5));
+          const ny = ly + Math.round(Math.sin(angle + d * 0.3) * (1 + Math.random() * 0.5));
+          if (!inBounds(nx, ny)) break;
+          const alpha = (0.3 + 0.5 * intensity) * (1 - d / len);
+          ctx.fillStyle = `rgba(150,200,255,${alpha})`;
+          ctx.fillRect(nx, ny, 1, 1);
+          lx = nx; ly = ny;
+          if (Math.random() < 0.3) break;
+        }
+        ctx.restore();
       }
     }
   }
@@ -1217,7 +1257,7 @@ function render() {
   if (mouseOverCanvas && mouseX >= 0 && mouseY >= 0) {
     const r = brushSize / 2;
     ctx.save();
-    ctx.strokeStyle = eraserMode ? 'rgba(255,100,100,0.5)' : 'rgba(255,255,255,0.25)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
@@ -1239,7 +1279,7 @@ function spawnElement(x, y, type) {
     cell.life = cell.maxLife;
     cell.temp = 600 + Math.floor(Math.random() * 200);
   } else if (type === 'smoke') {
-    cell.maxLife = 30 + Math.floor(Math.random() * 20);
+    cell.maxLife = 180 + Math.floor(Math.random() * 180);
     cell.life = cell.maxLife;
   } else if (type === 'uranium') {
     cell.temp = 30 + Math.floor(Math.random() * 20);
@@ -1278,7 +1318,6 @@ function spawnElement(x, y, type) {
   }
 
   grid[y][x] = cell;
-  playSpawnSound();
 }
 
 function spawnBrushAt(mx, my, element) {
@@ -1307,25 +1346,36 @@ function spawnBrushAt(mx, my, element) {
   }
 }
 
-function placeAtMouse(mx, my) {
+function eraseAt(mx, my) {
   if (selectMode) return;
   const cx = Math.floor(mx);
   const cy = Math.floor(my);
-  if (eraserMode) {
-    const half = Math.floor(brushSize / 2);
-    for (let dy = 0; dy < brushSize; dy++) {
-      for (let dx = 0; dx < brushSize; dx++) {
-        const x = cx + dx - half;
-        const y = cy + dy - half;
-        if (inBounds(x, y)) grid[y][x] = null;
-      }
+  const half = Math.floor(brushSize / 2);
+  for (let dy = 0; dy < brushSize; dy++) {
+    for (let dx = 0; dx < brushSize; dx++) {
+      const x = cx + dx - half;
+      const y = cy + dy - half;
+      if (inBounds(x, y)) grid[y][x] = null;
     }
-    return;
   }
+}
+
+function placeAtMouse2(mx, my) {
+  if (selectMode) return;
+  const cx = Math.floor(mx);
+  const cy = Math.floor(my);
   if (selectedElement === 'switch') {
     const cell = getCell(cx, cy);
     if (cell && cell.type === 'switch') {
       cell.active = !cell.active;
+      return;
+    }
+  }
+  // Button click detection
+  if (selectedElement === 'button') {
+    const cell = getCell(cx, cy);
+    if (cell && cell.type === 'button') {
+      cell.pressed = true;
       return;
     }
   }
@@ -1343,23 +1393,36 @@ function canvasCoords(e) {
 
 // ----- Mouse / Touch Input -----
 let isMouseDown = false;
+let mouseButton = -1;
 
 canvas.addEventListener('mousedown', (e) => {
   initAudio();
   isMouseDown = true;
-  if (e.button === 2) { eraserMode = true; }
+  mouseButton = e.button;
   const { mx, my } = canvasCoords(e);
-  placeAtMouse(mx, my);
+
+  if (e.button === 0) {
+    // Left click = Eraser
+    eraseAt(mx, my);
+  } else if (e.button === 2) {
+    // Right click = Build
+    placeAtMouse2(mx, my);
+  }
+  // Button 1 (middle) handled by ping listener
 });
 canvas.addEventListener('mousemove', (e) => {
   const { mx, my } = canvasCoords(e);
   mouseX = mx; mouseY = my;
   if (isMouseDown) {
-    placeAtMouse(mx, my);
+    if (mouseButton === 0) {
+      eraseAt(mx, my);
+    } else if (mouseButton === 2) {
+      placeAtMouse2(mx, my);
+    }
     sendWS({ type: 'cursor', x: mx, y: my });
   }
 });
-canvas.addEventListener('mouseup',   () => { isMouseDown = false; eraserMode = false; });
+canvas.addEventListener('mouseup',   () => { isMouseDown = false; mouseButton = -1; });
 canvas.addEventListener('mouseleave', () => { isMouseDown = false; mouseOverCanvas = false; });
 canvas.addEventListener('mouseenter', () => { mouseOverCanvas = true; });
 
@@ -1377,14 +1440,15 @@ canvas.addEventListener('touchstart', (e) => {
   const { mx, my } = canvasCoords(e.touches[0]);
   mouseX = mx; mouseY = my;
   isMouseDown = true;
-  placeAtMouse(mx, my);
+  mouseButton = 2;
+  placeAtMouse2(mx, my);
 }, { passive: false });
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   if (isMouseDown) {
     const { mx, my } = canvasCoords(e.touches[0]);
     mouseX = mx; mouseY = my;
-    placeAtMouse(mx, my);
+    placeAtMouse2(mx, my);
   }
 }, { passive: false });
 canvas.addEventListener('touchend', () => { isMouseDown = false; });
@@ -1435,20 +1499,6 @@ speedSlider.addEventListener('input', () => {
 
 document.getElementById('clear-btn').addEventListener('click', () => {
   clearGrid();
-});
-
-document.getElementById('eraser-btn').addEventListener('click', () => {
-  eraserMode = !eraserMode;
-  const btn = document.getElementById('eraser-btn');
-  if (eraserMode) {
-    btn.style.borderColor = '#ff6666';
-    btn.style.color = '#ff6666';
-    btn.style.boxShadow = '0 0 10px rgba(255,100,100,0.3)';
-  } else {
-    btn.style.borderColor = '#444';
-    btn.style.color = '#aaa';
-    btn.style.boxShadow = 'none';
-  }
 });
 
 // Wind slider
@@ -1572,12 +1622,12 @@ document.getElementById('pvp-btn').addEventListener('click', () => {
 });
 
 // Override placeAtMouse for PvP
-var origPlacePvp = placeAtMouse;
-placeAtMouse = function(mx, my) {
+var origPlacePvp = placeAtMouse2;
+placeAtMouse2 = function(mx, my) {
   if (pvpMode) {
     const el = selectedElement;
     if (isHost) {
-      const allowed = ['wall', 'wire', 'heatwire', 'switch', 'led', 'heater', 'steamgen', 'turbine', 'cooler', 'piston', 'sensor', 'tesla', 'portal_blue', 'portal_orange', 'stone'];
+      const allowed = ['wall', 'wire', 'heatwire', 'switch', 'led', 'heater', 'steamgen', 'turbine', 'cooler', 'piston', 'sensor', 'tesla', 'portal_blue', 'portal_orange', 'stone', 'button'];
       if (allowed.indexOf(el) === -1) return;
     } else {
       const allowed = ['gunpowder', 'fuse', 'c4', 'uranium', 'acid', 'fire', 'gasoline', 'sparkler', 'meteor'];
@@ -1933,6 +1983,39 @@ function updateCell(x, y, cell) {
         setCell(x, y, null);
         return;
       }
+      // High-voltage arc from battery to nearby conductors
+      if (Math.random() < 0.03) {
+        const arcRadius = 8;
+        for (let dx = -arcRadius; dx <= arcRadius; dx++) {
+          for (let dy = -arcRadius; dy <= arcRadius; dy++) {
+            if (dx === 0 && dy === 0) continue;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > arcRadius) continue;
+            if (Math.random() > 0.04) continue;
+            const nx = x + dx, ny = y + dy;
+            if (!inBounds(nx, ny)) continue;
+            const target = grid[ny][nx];
+            if (!target) continue;
+            const isConductor = target.type === 'wire' || target.type === 'heatwire' || target.type === 'switch' || target.type === 'led' || target.type === 'heater' || target.type === 'steamgen' || target.type === 'turbine' || target.type === 'tesla';
+            if (!isConductor) continue;
+            if (target.powered) continue;
+            const segs = 3 + Math.floor(Math.random() * 3);
+            teslaArcs.push({ x1: x, y1: y, x2: nx, y2: ny, timer: 8, maxTimer: 8, segments: segs, seed: Math.random() * 256 });
+            target.powered = true;
+            target.life = 5;
+            for (let s = 0; s < segs; s++) {
+              const frac = (s + 1) / (segs + 1);
+              const ix = Math.round(x + dx * frac + (Math.random() - 0.5) * 2);
+              const iy = Math.round(y + dy * frac + (Math.random() - 0.5) * 2);
+              if (!inBounds(ix, iy)) continue;
+              const ic = grid[iy][ix];
+              if (ic && ic.type === 'wood' && !ic.burning) { ic.burning = true; ic.burnProgress = 0; }
+              if (ic && ic.type === 'water') { setCell(ix, iy, { type: 'steam', seed: Math.random() * 256 | 0, maxLife: 30 + Math.random() * 20 | 0, life: 30 + Math.random() * 20 | 0, temp: 200 }); }
+              if (ic && (ic.type === 'gunpowder' || ic.type === 'c4' || ic.type === 'uranium')) { ic.temp = (ic.temp || 0) + 200; }
+            }
+          }
+        }
+      }
       break;
     }
 
@@ -1945,6 +2028,43 @@ function updateCell(x, y, cell) {
       if (!cell.powered && checkPowerNeighbor(x, y)) {
         cell.powered = true;
         cell.life = 5;
+      }
+      // High-voltage arc: powered wire jumps to nearby conductors
+      if (cell.powered && Math.random() < 0.02) {
+        const arcRadius = 7;
+        for (let dx = -arcRadius; dx <= arcRadius; dx++) {
+          for (let dy = -arcRadius; dy <= arcRadius; dy++) {
+            if (dx === 0 && dy === 0) continue;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > arcRadius) continue;
+            if (Math.random() > 0.05) continue;
+            const nx = x + dx, ny = y + dy;
+            if (!inBounds(nx, ny)) continue;
+            const target = grid[ny][nx];
+            if (!target) continue;
+            const isConductor = target.type === 'wire' || target.type === 'heatwire' || target.type === 'battery' || target.type === 'switch' || target.type === 'led' || target.type === 'heater' || target.type === 'tesla';
+            if (!isConductor) continue;
+            if (target.powered) continue;
+            // Zigzag arc visual between (x,y) and (nx,ny)
+            const segs = 3 + Math.floor(Math.random() * 3);
+            const arcKey = x + ',' + y + '-' + nx + ',' + ny;
+            teslaArcs.push({ x1: x, y1: y, x2: nx, y2: ny, timer: 6, maxTimer: 6, segments: segs, seed: Math.random() * 256 });
+            // Zap the target — transfer power
+            target.powered = true;
+            target.life = 5;
+            // Arc ignites things in the air between
+            for (let s = 0; s < segs; s++) {
+              const frac = (s + 1) / (segs + 1);
+              const ix = Math.round(x + dx * frac + (Math.random() - 0.5) * 2);
+              const iy = Math.round(y + dy * frac + (Math.random() - 0.5) * 2);
+              if (!inBounds(ix, iy)) continue;
+              const ic = grid[iy][ix];
+              if (ic && ic.type === 'wood' && !ic.burning) { ic.burning = true; ic.burnProgress = 0; }
+              if (ic && ic.type === 'water') { setCell(ix, iy, { type: 'steam', seed: Math.random() * 256 | 0, maxLife: 30 + Math.random() * 20 | 0, life: 30 + Math.random() * 20 | 0, temp: 200 }); }
+              if (ic && (ic.type === 'gunpowder' || ic.type === 'c4' || ic.type === 'uranium')) { ic.temp = (ic.temp || 0) + 200; }
+            }
+          }
+        }
       }
       break;
     }
@@ -2450,6 +2570,28 @@ function updateCell(x, y, cell) {
       break;
     }
 
+    // ===== BUTTON (Кнопка) =====
+    case 'button': {
+      // Powered only while pressed (set externally by mouse click)
+      if (cell.pressed) {
+        // Provide power to adjacent wires
+        const bDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+        for (const [dx, dy] of bDirs) {
+          const n = getCell(x + dx, y + dy);
+          if (n && (n.type === 'wire' || n.type === 'heatwire' || n.type === 'switch' || n.type === 'led' || n.type === 'heater' || n.type === 'steamgen' || n.type === 'turbine' || n.type === 'tesla') && !n.powered) {
+            n.powered = true;
+            n.life = 2;
+          }
+        }
+        cell.powered = true;
+        cell.life = 2;
+      } else {
+        cell.powered = false;
+        cell.life = 0;
+      }
+      break;
+    }
+
     // ===== TESLA COIL =====
     case 'tesla': {
       if (!cell.powered && checkPowerNeighbor(x, y)) {
@@ -2836,6 +2978,7 @@ function updateCell(x, y, cell) {
     case 'wood': {
       if (cell.burning) {
         cell.burnProgress += 1.2;
+        if (Math.random() < 0.01) playSpawnSound();
         if (cell.burnProgress >= 100) {
           setCell(x, y, {
             type: 'fire',
@@ -2886,36 +3029,53 @@ function updateCell(x, y, cell) {
       break;
     }
 
-    // ===== SMOKE =====
+    // ===== SMOKE (реалистичный газ) =====
     case 'smoke': {
       if (y <= 0) { setCell(x, y, null); return; }
       cell.life--;
       if (cell.life <= 0) { setCell(x, y, null); return; }
-      if (Math.random() < 0.15) { setCell(x, y, null); return; }
+      if (Math.random() < 0.02) { setCell(x, y, null); return; }
 
-      const wobble = Math.random() < 0.5 ? -1 : 1;
-      // Wind drift affects horizontal movement
+      // Turbulence — random horizontal push
+      const turbulence = Math.random() < 0.35 ? (Math.random() < 0.5 ? -1 : 1) : 0;
+
+      // Wind drift
       const windDrift = Math.round(windPower * 0.3);
       const windDir = windDrift > 0 ? 1 : (windDrift < 0 ? -1 : 0);
-      const useWind = windDir !== 0 && Math.random() < Math.abs(windPower) * 0.15;
-      const r = Math.random();
-      if (r < 0.40) {
-        if (isEmpty(x, y - 1))           { moveCell(x, y, x, y - 1); return; }
-      } else if (r < 0.60) {
-        if (isEmpty(x + wobble, y - 1))  { moveCell(x, y, x + wobble, y - 1); return; }
-      } else if (r < 0.75) {
-        if (isEmpty(x + wobble, y))      { moveCell(x, y, x + wobble, y); return; }
-      } else if (r < 0.85) {
-        if (isEmpty(x - wobble, y - 1))  { moveCell(x, y, x - wobble, y - 1); return; }
+
+      // Gas diffusion: try to rise first, then spread sideways/down to fill gaps
+      const canGoUp = isEmpty(x, y - 1);
+      const canGoLeft = isEmpty(x - 1, y);
+      const canGoRight = isEmpty(x + 1, y);
+      const canGoUpLeft = isEmpty(x - 1, y - 1);
+      const canGoUpRight = isEmpty(x + 1, y - 1);
+      const canGoDown = isEmpty(x, y + 1);
+
+      // Try rising with turbulence/wind
+      if (canGoUp) {
+        const tx = x + turbulence + (windDir || 0);
+        if (tx !== x && inBounds(tx, y - 1) && isEmpty(tx, y - 1)) { moveCell(x, y, tx, y - 1); return; }
+        moveCell(x, y, x, y - 1); return;
       }
-      if (useWind) {
-        const wx = x + windDir;
-        if (inBounds(wx, y) && isEmpty(wx, y)) { moveCell(x, y, wx, y); return; }
-        if (inBounds(wx, y - 1) && isEmpty(wx, y - 1)) { moveCell(x, y, wx, y - 1); return; }
+      // Try up-diagonal
+      if (canGoUpLeft) { moveCell(x, y, x - 1, y - 1); return; }
+      if (canGoUpRight) { moveCell(x, y, x + 1, y - 1); return; }
+
+      // Spread sideways
+      if (turbulence !== 0) {
+        if (turbulence === -1 && canGoLeft) { moveCell(x, y, x - 1, y); return; }
+        if (turbulence === 1 && canGoRight) { moveCell(x, y, x + 1, y); return; }
       }
-      if (isEmpty(x, y - 1))             { moveCell(x, y, x, y - 1); return; }
-      if (isEmpty(x + wobble, y - 1))    { moveCell(x, y, x + wobble, y - 1); return; }
-      if (isEmpty(x - wobble, y - 1))    { moveCell(x, y, x - wobble, y - 1); return; }
+      if (windDir !== 0) {
+        if (windDir === -1 && canGoLeft) { moveCell(x, y, x - 1, y); return; }
+        if (windDir === 1 && canGoRight) { moveCell(x, y, x + 1, y); return; }
+      }
+      if (canGoLeft) { moveCell(x, y, x - 1, y); return; }
+      if (canGoRight) { moveCell(x, y, x + 1, y); return; }
+
+      // Desperate: sink down-diagonal to fill gaps
+      if (canGoDown && isEmpty(x - 1, y + 1)) { moveCell(x, y, x - 1, y + 1); return; }
+      if (canGoDown && isEmpty(x + 1, y + 1)) { moveCell(x, y, x + 1, y + 1); return; }
       break;
     }
 
@@ -3168,10 +3328,11 @@ function loadGridData(data) {
     var d = data[i];
     if (inBounds(d.x, d.y)) {
       var cell = { type: d.type, seed: d.seed || Math.random()*256|0, temp: d.temp || 0 };
-      if (d.type === 'battery' || d.type === 'wire' || d.type === 'heatwire' || d.type === 'switch' || d.type === 'led' || d.type === 'heater' || d.type === 'steamgen' || d.type === 'turbine' || d.type === 'piston' || d.type === 'sensor' || d.type === 'tesla') {
+      if (d.type === 'battery' || d.type === 'wire' || d.type === 'heatwire' || d.type === 'switch' || d.type === 'led' || d.type === 'heater' || d.type === 'steamgen' || d.type === 'turbine' || d.type === 'piston' || d.type === 'sensor' || d.type === 'tesla' || d.type === 'button') {
         cell.powered = !!d.powered; cell.life = d.life || 0;
       }
       if (d.type === 'switch') cell.active = !!d.active;
+      if (d.type === 'button') cell.pressed = !!d.pressed;
       if (d.type === 'piston') { cell.dir = d.dir || -1; cell.extended = !!d.extended; }
       if (d.type === 'battery') { cell.powered = true; cell.life = 5; }
       if (d.type === 'sparkler') { cell.maxLife = d.maxLife || 500; cell.life = d.life || 500; }
@@ -3213,10 +3374,11 @@ function connectMP() {
           setCell(msg.cell.x, msg.cell.y, null);
         } else {
           var c = { type: msg.cell.type, seed: msg.cell.seed || Math.random()*256|0, temp: msg.cell.temp || 0 };
-          if (msg.cell.type === 'battery' || msg.cell.type === 'wire' || msg.cell.type === 'switch' || msg.cell.type === 'led' || msg.cell.type === 'heater' || msg.cell.type === 'steamgen' || msg.cell.type === 'turbine' || msg.cell.type === 'piston' || msg.cell.type === 'sensor' || msg.cell.type === 'tesla') {
+          if (msg.cell.type === 'battery' || msg.cell.type === 'wire' || msg.cell.type === 'switch' || msg.cell.type === 'led' || msg.cell.type === 'heater' || msg.cell.type === 'steamgen' || msg.cell.type === 'turbine' || msg.cell.type === 'piston' || msg.cell.type === 'sensor' || msg.cell.type === 'tesla' || msg.cell.type === 'button') {
             c.powered = !!msg.cell.powered; c.life = msg.cell.life || 0;
           }
           if (msg.cell.type === 'switch') c.active = !!msg.cell.active;
+          if (msg.cell.type === 'button') c.pressed = !!msg.cell.pressed;
           if (msg.cell.type === 'piston') { c.dir = msg.cell.dir || -1; c.extended = !!msg.cell.extended; }
           if (msg.cell.type === 'sparkler') { c.maxLife = msg.cell.maxLife || 500; c.life = msg.cell.life || 500; }
           if (msg.cell.type === 'lava' || msg.cell.type === 'gasoline' || msg.cell.type === 'nitro') { c.life = msg.cell.life || 0; }
@@ -3325,19 +3487,20 @@ spawnBrushAt = function(mx, my, element) {
 function sendCell(x, y, c) {
   if (!c || !c.type) return;
   var d = { x: x, y: y, type: c.type, seed: c.seed, temp: c.temp || 0 };
-  if (c.type === 'battery' || c.type === 'wire' || c.type === 'heatwire' || c.type === 'switch' || c.type === 'led' || c.type === 'heater' || c.type === 'steamgen' || c.type === 'turbine' || c.type === 'piston' || c.type === 'sensor' || c.type === 'tesla') {
+  if (c.type === 'battery' || c.type === 'wire' || c.type === 'heatwire' || c.type === 'switch' || c.type === 'led' || c.type === 'heater' || c.type === 'steamgen' || c.type === 'turbine' || c.type === 'piston' || c.type === 'sensor' || c.type === 'tesla' || c.type === 'button') {
     d.powered = !!c.powered; d.life = c.life || 0;
   }
   if (c.type === 'switch') d.active = !!c.active;
+  if (c.type === 'button') d.pressed = !!c.pressed;
   if (c.type === 'piston') { d.dir = c.dir || -1; d.extended = !!c.extended; }
   if (c.type === 'sparkler') { d.maxLife = c.maxLife || 500; d.life = c.life || 500; }
   if (c.type === 'lava' || c.type === 'gasoline' || c.type === 'nitro') { d.life = c.life || 0; }
   sendWS({ type: 'place', cell: d });
 }
 
-// Override placeAtMouse for switch toggle sync
-var origPlaceAtMouse = placeAtMouse;
-placeAtMouse = function(mx, my) {
+// Override placeAtMouse2 for switch/button sync
+var origPlaceAtMouse2 = placeAtMouse2;
+placeAtMouse2 = function(mx, my) {
   var cx = Math.floor(mx), cy = Math.floor(my);
   if (selectedElement === 'switch') {
     var cell = getCell(cx, cy);
@@ -3347,8 +3510,29 @@ placeAtMouse = function(mx, my) {
       return;
     }
   }
-  origPlaceAtMouse(mx, my);
+  if (selectedElement === 'button') {
+    var cell = getCell(cx, cy);
+    if (cell && cell.type === 'button') {
+      cell.pressed = true;
+      sendCell(cx, cy, cell);
+      return;
+    }
+  }
+  origPlaceAtMouse2(mx, my);
 };
+
+// Release all buttons on mouseup
+canvas.addEventListener('mouseup', function() {
+  for (var y = 0; y < ROWS; y++) {
+    for (var x = 0; x < COLS; x++) {
+      var c = grid[y][x];
+      if (c && c.type === 'button' && c.pressed) {
+        c.pressed = false;
+        sendCell(x, y, c);
+      }
+    }
+  }
+});
 
 // Clear button also sends via server
 var originalClear = clearGrid;
