@@ -189,6 +189,12 @@
     <button class="tool-btn" data-element="wood" style="--glow:#6b4423">
       <span class="color-dot" style="background:#6b4423;box-shadow:0 0 6px rgba(107,68,35,0.3)"></span> Дерево
     </button>
+    <button class="tool-btn" data-element="gasoline" style="--glow:#ffcc33">
+      <span class="color-dot" style="background:#ffcc33;box-shadow:0 0 8px rgba(255,200,50,0.5)"></span> Бензин
+    </button>
+    <button class="tool-btn" data-element="lava" style="--glow:#ff5511">
+      <span class="color-dot" style="background:#ff5511;box-shadow:0 0 10px rgba(255,80,20,0.6)"></span> Лава
+    </button>
   </div>
 
   <div class="tools-group">
@@ -284,6 +290,10 @@
     </button>
   </div>
 
+  <div class="tools-group">
+    <button id="eraser-btn" style="padding:8px;background:#1a1a2a;border:1px solid #444;border-radius:6px;color:#aaa;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:2px;transition:all 0.2s;">🧹 Ластик</button>
+  </div>
+
   <div class="tools-group" id="brush-group">
     <label>Кисть</label>
     <input type="range" id="brush-slider" min="1" max="12" value="3">
@@ -343,6 +353,9 @@ const ELEMENT_COLORS = {
   spore:     { r: 150, g: 70,  b: 180 },
   heatwire:  { r: 200, g: 100, b: 30 },
   sparkler:  { r: 255, g: 220, b: 100 },
+  gasoline:  { r: 255, g: 200, b: 50 },
+  lava:      { r: 240, g: 80,  b: 20 },
+  stone:     { r: 100, g: 95,  b: 90 },
 };
 
 let selectedElement = 'sand';
@@ -352,6 +365,10 @@ let updateAccum = 0;
 const MAX_STEPS_PER_FRAME = 4;
 let explosionFlash = { timer: 0, maxT: 15, x: 0, y: 0, radius: 30 };
 let paused = false;
+let eraserMode = false;
+let zoom = 1;
+let mouseX = -1, mouseY = -1;
+let mouseOverCanvas = false;
 
 // ----- Grid -----
 let grid = [];
@@ -397,7 +414,7 @@ function resizeCanvas() {
   const container = canvas.parentElement;
   const maxW = container.clientWidth;
   const maxH = container.clientHeight;
-  const scale = Math.min(maxW / COLS, maxH / ROWS);
+  const scale = Math.min(maxW / COLS, maxH / ROWS) * zoom;
   canvas.style.width = Math.floor(COLS * scale) + 'px';
   canvas.style.height = Math.floor(ROWS * scale) + 'px';
 }
@@ -804,6 +821,32 @@ function drawCell(x, y, cell) {
       return true;
     }
 
+    case 'gasoline': {
+      const slosh = Math.sin(cell.seed * 0.5 + (cell.life || 0) * 0.1) * 8;
+      ctx.fillStyle = `rgba(${255},${200 + slosh|0},${50 + slosh * 0.5|0},0.7)`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'lava': {
+      const pulse = Math.sin(Date.now() * 0.005 + cell.seed) * 15;
+      const r = 240;
+      const g = 60 + pulse * 0.5;
+      const b = 10;
+      const heat = heatBlend(r, g, b, cell.temp || 1000);
+      ctx.fillStyle = heat || `rgb(${r|0},${g|0},${b|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'stone': {
+      const v = (cell.seed / 255 - 0.5) * 15;
+      const heat = heatBlend(100 + v, 95 + v, 90 + v, cell.temp);
+      ctx.fillStyle = heat || `rgb(${100 + v|0},${95 + v|0},${90 + v|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
     default:
       return false;
   }
@@ -950,6 +993,19 @@ function render() {
       ctx.restore();
     }
   }
+
+  // Brush preview circle
+  if (mouseOverCanvas && mouseX >= 0 && mouseY >= 0) {
+    const r = brushSize / 2;
+    ctx.save();
+    ctx.strokeStyle = eraserMode ? 'rgba(255,100,100,0.5)' : 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.arc(mouseX, mouseY, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 // ----- Element Spawning -----
@@ -981,9 +1037,14 @@ function spawnElement(x, y, type) {
     cell.maxLife = 300 + Math.floor(Math.random() * 200);
     cell.life = cell.maxLife;
     cell.temp = 200;
+  } else if (type === 'gasoline') {
+    cell.temp = 20;
+  } else if (type === 'lava') {
+    cell.temp = 800 + Math.floor(Math.random() * 400);
   }
 
   grid[y][x] = cell;
+  playSpawnSound();
 }
 
 function spawnBrushAt(mx, my, element) {
@@ -1015,7 +1076,17 @@ function spawnBrushAt(mx, my, element) {
 function placeAtMouse(mx, my) {
   const cx = Math.floor(mx);
   const cy = Math.floor(my);
-  // Toggle switch on click
+  if (eraserMode) {
+    const half = Math.floor(brushSize / 2);
+    for (let dy = 0; dy < brushSize; dy++) {
+      for (let dx = 0; dx < brushSize; dx++) {
+        const x = cx + dx - half;
+        const y = cy + dy - half;
+        if (inBounds(x, y)) grid[y][x] = null;
+      }
+    }
+    return;
+  }
   if (selectedElement === 'switch') {
     const cell = getCell(cx, cy);
     if (cell && cell.type === 'switch') {
@@ -1039,23 +1110,37 @@ function canvasCoords(e) {
 let isMouseDown = false;
 
 canvas.addEventListener('mousedown', (e) => {
+  initAudio();
   isMouseDown = true;
+  if (e.button === 2) { eraserMode = true; }
   const { mx, my } = canvasCoords(e);
   placeAtMouse(mx, my);
 });
 canvas.addEventListener('mousemove', (e) => {
+  const { mx, my } = canvasCoords(e);
+  mouseX = mx; mouseY = my;
   if (isMouseDown) {
-    const { mx, my } = canvasCoords(e);
     placeAtMouse(mx, my);
     sendWS({ type: 'cursor', x: mx, y: my });
   }
 });
-canvas.addEventListener('mouseup',   () => { isMouseDown = false; });
-canvas.addEventListener('mouseleave', () => { isMouseDown = false; });
+canvas.addEventListener('mouseup',   () => { isMouseDown = false; eraserMode = false; });
+canvas.addEventListener('mouseleave', () => { isMouseDown = false; mouseOverCanvas = false; });
+canvas.addEventListener('mouseenter', () => { mouseOverCanvas = true; });
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.1 : 0.1;
+  zoom = Math.max(0.5, Math.min(5, zoom + delta));
+  resizeCanvas();
+}, { passive: false });
+
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 canvas.addEventListener('touchstart', (e) => {
   e.preventDefault();
   const { mx, my } = canvasCoords(e.touches[0]);
+  mouseX = mx; mouseY = my;
   isMouseDown = true;
   placeAtMouse(mx, my);
 }, { passive: false });
@@ -1063,6 +1148,7 @@ canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   if (isMouseDown) {
     const { mx, my } = canvasCoords(e.touches[0]);
+    mouseX = mx; mouseY = my;
     placeAtMouse(mx, my);
   }
 }, { passive: false });
@@ -1114,6 +1200,20 @@ speedSlider.addEventListener('input', () => {
 
 document.getElementById('clear-btn').addEventListener('click', () => {
   clearGrid();
+});
+
+document.getElementById('eraser-btn').addEventListener('click', () => {
+  eraserMode = !eraserMode;
+  const btn = document.getElementById('eraser-btn');
+  if (eraserMode) {
+    btn.style.borderColor = '#ff6666';
+    btn.style.color = '#ff6666';
+    btn.style.boxShadow = '0 0 10px rgba(255,100,100,0.3)';
+  } else {
+    btn.style.borderColor = '#444';
+    btn.style.color = '#aaa';
+    btn.style.boxShadow = 'none';
+  }
 });
 
 // ----- Update / Physics -----
@@ -1307,6 +1407,7 @@ function updateCell(x, y, cell) {
             }
           }
         }
+        playExplosionSound();
         explosionFlash.timer = 10;
         explosionFlash.maxT = 10;
         explosionFlash.x = x;
@@ -1681,6 +1782,7 @@ function updateCell(x, y, cell) {
             }
           }
         }
+        playExplosionSound();
         explosionFlash.timer = 8;
         explosionFlash.maxT = 8;
         explosionFlash.x = x;
@@ -1790,6 +1892,44 @@ function updateCell(x, y, cell) {
       break;
     }
 
+    // ===== GASOLINE (бензин) =====
+    case 'gasoline': {
+      if (cell.temp > 60) {
+        const R = 3;
+        for (let dx = -R; dx <= R; dx++) {
+          for (let dy = -R; dy <= R; dy++) {
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > R) continue;
+            const nx = x + dx, ny = y + dy;
+            if (!inBounds(nx, ny)) continue;
+            if (grid[ny][nx] === null && Math.random() < 0.7) {
+              const life = 40 + Math.floor(Math.random() * 30);
+              setCell(nx, ny, { type: 'fire', seed: Math.random() * 256 | 0, maxLife: life, life: life, temp: 600 });
+            }
+          }
+        }
+        explosionFlash.timer = 6;
+        explosionFlash.maxT = 6;
+        explosionFlash.x = x;
+        explosionFlash.y = y;
+        explosionFlash.radius = 15;
+        setCell(x, y, null);
+        return;
+      }
+      const gDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      for (const [dx, dy] of gDirs) {
+        const n = getCell(x + dx, y + dy);
+        if (n && (n.type === 'fire' || n.temp > 80)) { cell.temp = 100; break; }
+      }
+      if (isEmpty(x, y + 1)) { moveCell(x, y, x, y + 1); return; }
+      const gDir = Math.random() < 0.5 ? -1 : 1;
+      if (isEmpty(x + gDir, y + 1)) { moveCell(x, y, x + gDir, y + 1); return; }
+      if (isEmpty(x - gDir, y + 1)) { moveCell(x, y, x - gDir, y + 1); return; }
+      if (isEmpty(x + gDir, y)) { moveCell(x, y, x + gDir, y); return; }
+      if (isEmpty(x - gDir, y)) { moveCell(x, y, x - gDir, y); return; }
+      break;
+    }
+
     // ===== WALL ===== (static)
 
     // ===== SOURCE =====
@@ -1884,6 +2024,7 @@ function updateCell(x, y, cell) {
             }
           }
         }
+        playExplosionSound();
         explosionFlash.timer = 12;
         explosionFlash.maxT = 12;
         explosionFlash.x = x;
@@ -1966,6 +2107,31 @@ function updateCell(x, y, cell) {
       break;
     }
 
+    // ===== LAVA =====
+    case 'lava': {
+      cell.temp = Math.max(100, (cell.temp || 800) - 0.5);
+      if (cell.temp < 200) {
+        setCell(x, y, { type: 'stone', seed: Math.random() * 256 | 0, temp: cell.temp });
+        return;
+      }
+      const lDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      for (const [dx, dy] of lDirs) {
+        const n = getCell(x + dx, y + dy);
+        if (n && n.type === 'water') {
+          setCell(x + dx, y + dy, { type: 'steam', seed: Math.random() * 256 | 0, maxLife: 40 + Math.random() * 30 | 0, life: 40 + Math.random() * 30 | 0, temp: 300 });
+          setCell(x, y, { type: 'stone', seed: Math.random() * 256 | 0, temp: 200 });
+          return;
+        }
+        if (n && n.type === 'wood' && !n.burning) { n.burning = true; n.burnProgress = 0; }
+        if (n && (n.type === 'gunpowder' || n.type === 'gasoline')) { n.temp = 200; }
+      }
+      if (isEmpty(x, y + 1)) { moveCell(x, y, x, y + 1); return; }
+      const lDir = Math.random() < 0.5 ? -1 : 1;
+      if (isEmpty(x + lDir, y + 1)) { moveCell(x, y, x + lDir, y + 1); return; }
+      if (isEmpty(x - lDir, y + 1)) { moveCell(x, y, x - lDir, y + 1); return; }
+      break;
+    }
+
     // ===== WOOD =====
     case 'wood': {
       if (cell.burning) {
@@ -2012,7 +2178,7 @@ function updateCell(x, y, cell) {
         moveCell(x, y, targetX, y);
         return;
       }
-      if (target.type !== 'wall' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'heatwire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen' && target.type !== 'turbine' && target.type !== 'cooler' && target.type !== 'piston' && target.type !== 'sensor' && target.type !== 'seeds' && target.type !== 'spore') {
+      if (target.type !== 'wall' && target.type !== 'stone' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'heatwire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen' && target.type !== 'turbine' && target.type !== 'cooler' && target.type !== 'piston' && target.type !== 'sensor' && target.type !== 'seeds' && target.type !== 'spore') {
         grid[y][targetX] = grid[y][x];
         grid[y][x] = target;
         return;
@@ -2111,6 +2277,7 @@ function updateCell(x, y, cell) {
         }
 
         // Visual flash
+        playExplosionSound();
         explosionFlash.timer = 20;
         explosionFlash.maxT = 20;
         explosionFlash.x = x;
@@ -2220,6 +2387,37 @@ function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
 }
 
+// ----- Sound Effects (Web Audio) -----
+let audioCtx = null;
+let sfxEnabled = false;
+
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    sfxEnabled = true;
+  } catch(e) {}
+}
+
+function playBeep(freq, duration, vol) {
+  if (!sfxEnabled || !audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime((vol || 0.15), audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration || 0.1));
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + (duration || 0.1));
+  } catch(e) {}
+}
+
+function playSpawnSound() { playBeep(600, 0.06, 0.08); }
+function playExplosionSound() { playBeep(100, 0.2, 0.2); playBeep(60, 0.3, 0.15); }
+
 // ----- Multiplayer (WebSocket, no WebRTC) -----
 var mpWS = null;
 var mpConnected = false;
@@ -2260,6 +2458,7 @@ function loadGridData(data) {
       if (d.type === 'piston') { cell.dir = d.dir || -1; cell.extended = !!d.extended; }
       if (d.type === 'battery') { cell.powered = true; cell.life = 5; }
       if (d.type === 'sparkler') { cell.maxLife = d.maxLife || 500; cell.life = d.life || 500; }
+      if (d.type === 'lava' || d.type === 'gasoline') { cell.life = d.life || 0; cell.maxLife = d.maxLife || 0; }
       grid[d.y][d.x] = cell;
     }
   }
@@ -2300,6 +2499,8 @@ function connectMP() {
           }
           if (msg.cell.type === 'switch') c.active = !!msg.cell.active;
           if (msg.cell.type === 'piston') { c.dir = msg.cell.dir || -1; c.extended = !!msg.cell.extended; }
+          if (msg.cell.type === 'sparkler') { c.maxLife = msg.cell.maxLife || 500; c.life = msg.cell.life || 500; }
+          if (msg.cell.type === 'lava' || msg.cell.type === 'gasoline') { c.life = msg.cell.life || 0; }
           setCell(msg.cell.x, msg.cell.y, c);
         }
         break;
@@ -2367,6 +2568,7 @@ function sendCell(x, y, c) {
   if (c.type === 'switch') d.active = !!c.active;
   if (c.type === 'piston') { d.dir = c.dir || -1; d.extended = !!c.extended; }
   if (c.type === 'sparkler') { d.maxLife = c.maxLife || 500; d.life = c.life || 500; }
+  if (c.type === 'lava' || c.type === 'gasoline') { d.life = c.life || 0; }
   sendWS({ type: 'place', cell: d });
 }
 
