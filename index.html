@@ -136,6 +136,13 @@
     margin-top: 4px;
   }
 
+  #chat-container::-webkit-scrollbar { width: 4px; }
+  #chat-container::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
+  #chat-log div { line-height: 1.4; }
+  .ping-btn:hover { border-color: #6666ff; box-shadow: 0 0 8px rgba(100,100,255,0.2); }
+  .ping-btn.active { border-color: #ffcc00; box-shadow: 0 0 12px rgba(255,200,0,0.3); }
+  #mission-banner { transition: opacity 0.5s; }
+
   @media (max-width: 640px) {
     body { flex-direction: column-reverse; }
     #panel {
@@ -239,6 +246,9 @@
     <button class="tool-btn" data-element="heatwire" style="--glow:#ff7722">
       <span class="color-dot" style="background:#cc6611;box-shadow:0 0 8px rgba(255,119,34,0.5)"></span> Нагрев.кабель
     </button>
+    <button class="tool-btn" data-element="tesla" style="--glow:#66aaff">
+      <span class="color-dot" style="background:#4488dd;box-shadow:0 0 10px rgba(100,170,255,0.6)"></span> Катушка Теслы
+    </button>
   </div>
 
   <div class="tools-group">
@@ -288,10 +298,44 @@
     <button class="tool-btn" data-element="smoke" style="--glow:#888888">
       <span class="color-dot" style="background:#888888;box-shadow:0 0 6px rgba(130,130,135,0.3)"></span> Дым
     </button>
+    <button class="tool-btn" data-element="nitro" style="--glow:#88ddff">
+      <span class="color-dot" style="background:#88ddff;box-shadow:0 0 10px rgba(130,220,255,0.6)"></span> Жидк.Азот
+    </button>
+  </div>
+
+  <div class="tools-group">
+    <label>Порталы</label>
+    <button class="tool-btn" data-element="portal_blue" style="--glow:#4488ff">
+      <span class="color-dot" style="background:#4488ff;box-shadow:0 0 10px rgba(68,136,255,0.6)"></span> Вход (Синий)
+    </button>
+    <button class="tool-btn" data-element="portal_orange" style="--glow:#ff8833">
+      <span class="color-dot" style="background:#ff8833;box-shadow:0 0 10px rgba(255,136,51,0.6)"></span> Выход (Оранж)
+    </button>
   </div>
 
   <div class="tools-group">
     <button id="eraser-btn" style="padding:8px;background:#1a1a2a;border:1px solid #444;border-radius:6px;color:#aaa;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:2px;transition:all 0.2s;">🧹 Ластик</button>
+  </div>
+
+  <div class="tools-group">
+    <label>Маркеры</label>
+    <div style="display:flex;gap:4px">
+      <button class="ping-btn" data-ping="⚠️" style="flex:1;padding:6px;background:#1a1a2a;border:1px solid #444;border-radius:4px;color:#ffcc00;cursor:pointer;font-size:16px">⚠️</button>
+      <button class="ping-btn" data-ping="🛠️" style="flex:1;padding:6px;background:#1a1a2a;border:1px solid #444;border-radius:4px;color:#66ddff;cursor:pointer;font-size:16px">🛠️</button>
+      <button class="ping-btn" data-ping="❓" style="flex:1;padding:6px;background:#1a1a2a;border:1px solid #444;border-radius:4px;color:#ff88aa;cursor:pointer;font-size:16px">❓</button>
+    </div>
+  </div>
+
+  <div class="tools-group" id="wind-group">
+    <label>Ветер</label>
+    <input type="range" id="wind-slider" min="-5" max="5" value="0" step="1">
+    <span id="wind-value" style="font-size:13px;color:#55aacc;text-align:center">0</span>
+  </div>
+
+  <div class="tools-group" id="gravity-group">
+    <label>Гравитация</label>
+    <input type="range" id="gravity-slider" min="1" max="10" value="5" step="1">
+    <span id="gravity-value" style="font-size:13px;color:#88aa88;text-align:center">1.0</span>
   </div>
 
   <div class="tools-group" id="brush-group">
@@ -307,8 +351,40 @@
   </div>
 
   <div class="tools-group">
+    <label>Инструменты</label>
+    <button id="select-btn" style="padding:6px;background:#1a1a2a;border:1px solid #448;border-radius:6px;color:#88aaff;font-size:12px;cursor:pointer;transition:all 0.2s;">📐 Выделение</button>
+    <div id="blueprint-area" style="display:none;flex-direction:column;gap:4px;margin-top:2px">
+      <input type="text" id="blueprint-input" placeholder="Код чертежа..." style="padding:4px 8px;background:#12122a;border:1px solid #448;border-radius:4px;color:#ccc;font-size:11px;width:100%">
+      <button id="blueprint-paste" style="padding:4px;background:#1a1a2a;border:1px solid #448;border-radius:4px;color:#88aaff;font-size:11px;cursor:pointer">📋 Вставить</button>
+    </div>
+  </div>
+
+  <div class="tools-group">
     <label>Мультиплеер</label>
     <div id="mp-status" style="font-size:10px;color:#666;text-align:center;margin-top:2px">Подключение...</div>
+    <div id="pvp-section" style="display:none;margin-top:2px">
+      <button id="pvp-btn" style="padding:4px 8px;background:#1a0a0a;border:1px solid #442;border-radius:4px;color:#aa6644;font-size:11px;cursor:pointer;width:100%">⚔️ PvP ВЫКЛ</button>
+    </div>
+  </div>
+
+  <div id="chat-container" style="border:1px solid #1a1a3a;border-radius:6px;background:#0a0a18;display:flex;flex-direction:column;max-height:100px">
+    <div id="chat-log" style="flex:1;font-size:10px;color:#888;padding:4px;overflow-y:auto;min-height:30px;max-height:60px;word-break:break-all"></div>
+    <div style="display:flex;gap:2px;padding:2px">
+      <input type="text" id="chat-input" placeholder="Чат..." style="flex:1;padding:3px 6px;background:#12122a;border:1px solid #2a2a4a;border-radius:4px;color:#ccc;font-size:11px;outline:none">
+      <button id="chat-send" style="padding:3px 8px;background:#1a1a3a;border:1px solid #2a2a4a;border-radius:4px;color:#88aaff;font-size:11px;cursor:pointer">▶</button>
+    </div>
+  </div>
+
+  <div id="mission-banner" style="border:1px solid #2a2a3a;border-radius:6px;background:#0a0a18;padding:6px;display:none">
+    <div style="font-size:10px;color:#ffcc44;text-align:center;text-transform:uppercase;letter-spacing:1px">🎯 Миссия</div>
+    <div id="mission-text" style="font-size:10px;color:#aaa;text-align:center;margin:2px 0"></div>
+    <div id="mission-bar-bg" style="height:6px;background:#1a1a2a;border-radius:3px;overflow:hidden">
+      <div id="mission-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffcc44,#ff8833);border-radius:3px;transition:width 0.3s"></div>
+    </div>
+  </div>
+
+  <div class="tools-group">
+    <button id="meteor-btn" style="padding:7px;background:#1a0a0a;border:1px solid #661122;border-radius:6px;color:#ff5533;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all 0.2s;">☄️ Метеорит</button>
   </div>
 
   <button id="pause-btn" style="padding:8px;background:#1a1a2a;border:1px solid #442266;border-radius:6px;color:#aa88dd;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:4px;transition:all 0.2s;">Пауза (Пробел)</button>
@@ -356,6 +432,12 @@ const ELEMENT_COLORS = {
   gasoline:  { r: 255, g: 200, b: 50 },
   lava:      { r: 240, g: 80,  b: 20 },
   stone:     { r: 100, g: 95,  b: 90 },
+  tesla:     { r: 60,  g: 130, b: 220 },
+  nitro:     { r: 160, g: 220, b: 255 },
+  portal_blue:  { r: 50,  g: 100, b: 255 },
+  portal_orange: { r: 255, g: 120, b: 40 },
+  ice:       { r: 180, g: 210, b: 240 },
+  meteor:    { r: 200, g: 60,  b: 30 },
 };
 
 let selectedElement = 'sand';
@@ -369,6 +451,24 @@ let eraserMode = false;
 let zoom = 1;
 let mouseX = -1, mouseY = -1;
 let mouseOverCanvas = false;
+let windPower = 0;
+let gravityFactor = 1.0;
+let pvpMode = false;
+let isHost = true;
+let selectedPing = '⚠️';
+let pings = [];
+let selectMode = false;
+let selectStart = null;
+let selectEnd = null;
+let blueprintCode = '';
+let missions = [];
+let missionActive = false;
+let missionProgress = 0;
+let missionMax = 1;
+let missionType = '';
+let chatLog = [];
+let meteorCountdown = 0;
+let teslaArcs = [];
 
 // ----- Grid -----
 let grid = [];
@@ -847,6 +947,59 @@ function drawCell(x, y, cell) {
       return false;
     }
 
+    case 'tesla': {
+      const v = (cell.seed / 255 - 0.5) * 10;
+      const glow = cell.powered ? 128 : 50;
+      const r = 60 + glow * 0.4 + v;
+      const g = 100 + glow * 0.5 + v;
+      const b = 180 + glow * 0.6;
+      ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return !!cell.powered;
+    }
+
+    case 'nitro': {
+      const wobble = Math.sin(Date.now() * 0.008 + cell.seed) * 10;
+      const r = 160 + wobble * 0.3;
+      const g = 220 + wobble * 0.2;
+      const b = 255;
+      ctx.fillStyle = `rgba(${r|0},${g|0},${b|0},0.8)`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'portal_blue': {
+      const pulse = Math.sin(Date.now() * 0.003 + cell.seed * 2) * 20;
+      ctx.fillStyle = `rgb(${50 + pulse * 0.2|0},${100 + pulse|0},${255})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'portal_orange': {
+      const pulse = Math.sin(Date.now() * 0.003 + cell.seed * 2) * 20;
+      ctx.fillStyle = `rgb(${255},${130 + pulse|0},${50 + pulse * 0.3|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
+    case 'ice': {
+      const v = (cell.seed / 255 - 0.5) * 8;
+      ctx.fillStyle = `rgba(${170 + v|0},${200 + v|0},${230 + v|0},0.7)`;
+      ctx.fillRect(x, y, 1, 1);
+      return false;
+    }
+
+    case 'meteor': {
+      const pulse = Math.sin(Date.now() * 0.01 + cell.seed) * 20;
+      const r = 230 + pulse * 0.3;
+      const g = 50 + (cell.temp || 0) * 0.01;
+      const b = 20;
+      const heat = heatBlend(r, g, b, cell.temp || 1000);
+      ctx.fillStyle = heat || `rgb(${r|0},${g|0},${b|0})`;
+      ctx.fillRect(x, y, 1, 1);
+      return true;
+    }
+
     default:
       return false;
   }
@@ -910,6 +1063,17 @@ function render() {
         } else if (cell.type === 'sparkler') {
           const i = Math.max(0.2, (cell.life || 0) / (cell.maxLife || 100));
           gctx.fillStyle = `rgba(255,220,100,${0.20 + 0.35 * i})`;
+        } else if (cell.type === 'tesla' && cell.powered) {
+          gctx.fillStyle = 'rgba(100,170,255,0.35)';
+        } else if (cell.type === 'nitro') {
+          gctx.fillStyle = 'rgba(160,220,255,0.20)';
+        } else if (cell.type === 'portal_blue') {
+          gctx.fillStyle = 'rgba(80,150,255,0.30)';
+        } else if (cell.type === 'portal_orange') {
+          gctx.fillStyle = 'rgba(255,150,80,0.30)';
+        } else if (cell.type === 'meteor') {
+          const i = Math.min(1, (cell.temp || 0) / 500);
+          gctx.fillStyle = `rgba(255,80,30,${0.20 + 0.40 * i})`;
         } else {
           gctx.fillStyle = 'rgba(255,120,40,0.30)';
         }
@@ -974,6 +1138,61 @@ function render() {
 
     ctx.restore();
     explosionFlash.timer--;
+  }
+
+  // Tesla arcs
+  for (let ai = teslaArcs.length - 1; ai >= 0; ai--) {
+    const arc = teslaArcs[ai];
+    arc.timer--;
+    if (arc.timer <= 0) { teslaArcs.splice(ai, 1); continue; }
+    const intensity = arc.timer / arc.maxTimer;
+    const branches = 3 + (arc.seed % 4);
+    for (let b = 0; b < branches; b++) {
+      const angle = (b / branches) * Math.PI * 2 + arc.seed * 0.1;
+      const len = 4 + (arc.seed % 8);
+      let lx = arc.x, ly = arc.y;
+      for (let d = 0; d < len; d++) {
+        const nx = lx + Math.round(Math.cos(angle + d * 0.3) * (1 + Math.random() * 0.5));
+        const ny = ly + Math.round(Math.sin(angle + d * 0.3) * (1 + Math.random() * 0.5));
+        if (!inBounds(nx, ny)) break;
+        const alpha = (0.3 + 0.5 * intensity) * (1 - d / len);
+        ctx.fillStyle = `rgba(150,200,255,${alpha})`;
+        ctx.fillRect(nx, ny, 1, 1);
+        lx = nx; ly = ny;
+        if (Math.random() < 0.3) break;
+      }
+    }
+  }
+
+  // Ping markers
+  for (let pi = pings.length - 1; pi >= 0; pi--) {
+    const p = pings[pi];
+    p.timer--;
+    if (p.timer <= 0) { pings.splice(pi, 1); continue; }
+    const alpha = Math.min(1, p.timer / 30);
+    ctx.save();
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.globalAlpha = alpha;
+    ctx.fillText(p.emoji, p.x, p.y - 4 - (1 - alpha) * 6);
+    ctx.restore();
+  }
+
+  // Selection rectangle
+  if (selectMode && selectStart && selectEnd) {
+    const sx = Math.min(selectStart.x, selectEnd.x);
+    const sy = Math.min(selectStart.y, selectEnd.y);
+    const ex = Math.max(selectStart.x, selectEnd.x);
+    const ey = Math.max(selectStart.y, selectEnd.y);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100,170,255,0.6)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(sx, sy, ex - sx, ey - sy);
+    ctx.fillStyle = 'rgba(100,170,255,0.08)';
+    ctx.fillRect(sx, sy, ex - sx, ey - sy);
+    ctx.restore();
   }
 
   // Friend cursor
@@ -1041,6 +1260,21 @@ function spawnElement(x, y, type) {
     cell.temp = 20;
   } else if (type === 'lava') {
     cell.temp = 800 + Math.floor(Math.random() * 400);
+  } else if (type === 'tesla') {
+    cell.powered = false;
+    cell.life = 0;
+  } else if (type === 'nitro') {
+    cell.temp = -200;
+  } else if (type === 'ice') {
+    cell.temp = -10;
+  } else if (type === 'meteor') {
+    cell.temp = 1000;
+    cell.life = 0;
+    cell.maxLife = 0;
+  } else if (type === 'portal_blue') {
+    cell.temp = 20;
+  } else if (type === 'portal_orange') {
+    cell.temp = 20;
   }
 
   grid[y][x] = cell;
@@ -1074,6 +1308,7 @@ function spawnBrushAt(mx, my, element) {
 }
 
 function placeAtMouse(mx, my) {
+  if (selectMode) return;
   const cx = Math.floor(mx);
   const cy = Math.floor(my);
   if (eraserMode) {
@@ -1215,6 +1450,284 @@ document.getElementById('eraser-btn').addEventListener('click', () => {
     btn.style.boxShadow = 'none';
   }
 });
+
+// Wind slider
+const windSlider = document.getElementById('wind-slider');
+const windValue = document.getElementById('wind-value');
+windSlider.addEventListener('input', () => {
+  windPower = parseInt(windSlider.value);
+  windValue.textContent = windPower;
+  sendWS({ type: 'wind', wind: windPower });
+});
+
+// Gravity slider
+const gravSlider = document.getElementById('gravity-slider');
+const gravValue = document.getElementById('gravity-value');
+gravSlider.addEventListener('input', () => {
+  gravityFactor = parseInt(gravSlider.value) / 5;
+  gravValue.textContent = gravityFactor.toFixed(1);
+  sendWS({ type: 'gravity', gravity: gravityFactor });
+});
+
+// Ping buttons
+document.querySelectorAll('.ping-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ping-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedPing = btn.dataset.ping;
+  });
+});
+
+// Middle-mouse ping on canvas
+canvas.addEventListener('mousedown', (e) => {
+  if (e.button === 1) {
+    e.preventDefault();
+    const { mx, my } = canvasCoords(e);
+    pings.push({ x: mx, y: my, emoji: selectedPing, timer: 120 });
+    sendWS({ type: 'ping', x: mx, y: my, emoji: selectedPing });
+  }
+});
+
+// Blueprint selection tool
+let origMousedown = null;
+document.getElementById('select-btn').addEventListener('click', () => {
+  selectMode = !selectMode;
+  const btn = document.getElementById('select-btn');
+  if (selectMode) {
+    btn.style.borderColor = '#88aaff';
+    btn.style.boxShadow = '0 0 10px rgba(100,170,255,0.3)';
+    document.getElementById('blueprint-area').style.display = 'flex';
+  } else {
+    btn.style.borderColor = '#448';
+    btn.style.boxShadow = 'none';
+    document.getElementById('blueprint-area').style.display = 'none';
+    selectStart = null; selectEnd = null;
+  }
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  if (selectMode && e.button === 0) {
+    const { mx, my } = canvasCoords(e);
+    selectStart = { x: Math.floor(mx), y: Math.floor(my) };
+    selectEnd = null;
+  }
+});
+canvas.addEventListener('mousemove', (e) => {
+  if (selectMode && selectStart && isMouseDown) {
+    const { mx, my } = canvasCoords(e);
+    selectEnd = { x: Math.floor(mx), y: Math.floor(my) };
+  }
+});
+canvas.addEventListener('mouseup', (e) => {
+  if (selectMode && selectStart && selectEnd) {
+    const sx = Math.min(selectStart.x, selectEnd.x);
+    const sy = Math.min(selectStart.y, selectEnd.y);
+    const ex = Math.max(selectStart.x, selectEnd.x);
+    const ey = Math.max(selectStart.y, selectEnd.y);
+    const cells = [];
+    for (let y = sy; y <= ey; y++) {
+      for (let x = sx; x <= ex; x++) {
+        const c = getCell(x, y);
+        if (c) cells.push({ x: x - sx, y: y - sy, type: c.type, seed: c.seed, temp: c.temp || 0 });
+      }
+    }
+    blueprintCode = btoa(JSON.stringify({ w: ex - sx + 1, h: ey - sy + 1, cells: cells }));
+    document.getElementById('blueprint-input').value = blueprintCode;
+  }
+});
+
+document.getElementById('blueprint-paste').addEventListener('click', () => {
+  const code = document.getElementById('blueprint-input').value.trim();
+  if (!code) return;
+  try {
+    const data = JSON.parse(atob(code));
+    const cx = Math.floor(mouseX), cy = Math.floor(mouseY);
+    for (const c of data.cells) {
+      const px = cx + c.x, py = cy + c.y;
+      if (inBounds(px, py) && grid[py][px] === null) {
+        const nc = { type: c.type, seed: c.seed || Math.random() * 256 | 0, temp: c.temp || 0 };
+        grid[py][px] = nc;
+        sendCell(px, py, nc);
+      }
+    }
+  } catch(e) { alert('Invalid blueprint code'); }
+});
+
+// PvP mode
+document.getElementById('pvp-btn').addEventListener('click', () => {
+  pvpMode = !pvpMode;
+  const btn = document.getElementById('pvp-btn');
+  if (pvpMode) {
+    btn.style.borderColor = '#ff6644';
+    btn.style.color = '#ff6644';
+    btn.style.boxShadow = '0 0 10px rgba(255,100,50,0.3)';
+    btn.textContent = '⚔️ PvP ВКЛ';
+  } else {
+    btn.style.borderColor = '#442';
+    btn.style.color = '#aa6644';
+    btn.style.boxShadow = 'none';
+    btn.textContent = '⚔️ PvP ВЫКЛ';
+  }
+  sendWS({ type: 'pvp', pvp: pvpMode });
+});
+
+// Override placeAtMouse for PvP
+var origPlacePvp = placeAtMouse;
+placeAtMouse = function(mx, my) {
+  if (pvpMode) {
+    const el = selectedElement;
+    if (isHost) {
+      const allowed = ['wall', 'wire', 'heatwire', 'switch', 'led', 'heater', 'steamgen', 'turbine', 'cooler', 'piston', 'sensor', 'tesla', 'portal_blue', 'portal_orange', 'stone'];
+      if (allowed.indexOf(el) === -1) return;
+    } else {
+      const allowed = ['gunpowder', 'fuse', 'c4', 'uranium', 'acid', 'fire', 'gasoline', 'sparkler', 'meteor'];
+      if (allowed.indexOf(el) === -1) return;
+    }
+  }
+  origPlacePvp(mx, my);
+};
+
+// Override clear button for PvP guest restriction
+var origClearRestrict = clearGrid;
+clearGrid = function() {
+  if (pvpMode && !isHost) return;
+  initGrid();
+  sendWS({ type: 'clear' });
+};
+
+// Meteor button
+document.getElementById('meteor-btn').addEventListener('click', () => {
+  const mx = 20 + Math.floor(Math.random() * (COLS - 40));
+  const cell = { type: 'meteor', seed: Math.random() * 256 | 0, temp: 1000, life: 0, maxLife: 0 };
+  grid[0][mx] = cell;
+  sendCell(mx, 0, cell);
+});
+
+// Chat system
+document.getElementById('chat-send').addEventListener('click', sendChat);
+document.getElementById('chat-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendChat();
+});
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  // Commands
+  if (text.startsWith('/')) {
+    const parts = text.split(' ');
+    const cmd = parts[0].toLowerCase();
+    if (cmd === '/gravity' && parts[1]) {
+      const val = parseFloat(parts[1]);
+      if (val >= 0 && val <= 1) {
+        gravityFactor = val;
+        gravSlider.value = val * 5;
+        gravValue.textContent = gravityFactor.toFixed(1);
+        sendWS({ type: 'gravity', gravity: gravityFactor });
+        addChat('Система', 'Гравитация: ' + gravityFactor.toFixed(1));
+      }
+    } else if (cmd === '/clear') {
+      clearGrid();
+      addChat('Система', 'Карта очищена');
+    } else {
+      addChat('Система', 'Неизвестная команда: ' + cmd);
+    }
+    return;
+  }
+
+  addChat('Я', text);
+  sendWS({ type: 'chat', text: text });
+}
+
+function addChat(who, text) {
+  const log = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.innerHTML = '<b>' + who + ':</b> ' + text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+// Mission system
+function checkMissions() {
+  if (!missionActive) return;
+  let progress = 0;
+  if (missionType === 'steam') {
+    let count = 0;
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const c = grid[y][x];
+        if (c && c.type === 'steam') count++;
+      }
+    }
+    progress = Math.min(missionMax, count);
+  } else if (missionType === 'led') {
+    let count = 0;
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const c = grid[y][x];
+        if (c && c.type === 'led' && c.powered) count++;
+      }
+    }
+    progress = Math.min(missionMax, count);
+  } else if (missionType === 'tree') {
+    let maxH = 0;
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const c = grid[y][x];
+        if (c && c.type === 'wood') {
+          // Find the top of this tree
+          let top = y;
+          for (let py = y - 1; py >= 0; py--) {
+            if (grid[py][x] && grid[py][x].type === 'wood') top = py;
+            else break;
+          }
+          maxH = Math.max(maxH, y - top + 1);
+        }
+      }
+    }
+    progress = Math.min(missionMax, maxH);
+  }
+  missionProgress = progress;
+  document.getElementById('mission-bar').style.width = (progress / missionMax * 100) + '%';
+  if (progress >= missionMax) {
+    addChat('🎯 Миссия', 'Выполнена!');
+    missionActive = false;
+    document.getElementById('mission-banner').style.display = 'none';
+    // Give new mission after delay
+    setTimeout(generateMission, 10000);
+  }
+}
+
+function generateMission() {
+  const types = ['steam', 'led', 'tree'];
+  const labels = {
+    steam: 'Сгенерируйте 1000 единиц пара',
+    led: 'Зажгите одновременно 5 LED лампочек',
+    tree: 'Вырастите дерево из семян высотой 40 блоков'
+  };
+  const goals = { steam: 1000, led: 5, tree: 40 };
+  const type = types[Math.floor(Math.random() * types.length)];
+  missionType = type;
+  missionMax = goals[type];
+  missionProgress = 0;
+  missionActive = true;
+  document.getElementById('mission-text').textContent = labels[type];
+  document.getElementById('mission-banner').style.display = 'block';
+  document.getElementById('mission-bar').style.width = '0%';
+  addChat('🎯 Миссия', 'Новое задание: ' + labels[type]);
+}
+
+// Modify gameLoop to check missions periodically
+var origGameLoop = gameLoop;
+gameLoop = function(timestamp) {
+  origGameLoop(timestamp);
+  if (missionActive && frameCount % 30 === 0) checkMissions();
+};
+
+// PvP section visibility
+if (mpConnected) document.getElementById('pvp-section').style.display = 'block';
 
 // ----- Update / Physics -----
 
@@ -1737,6 +2250,13 @@ function updateCell(x, y, cell) {
 
     // ===== SAND =====
     case 'sand': {
+      const grav = gravityFactor;
+      if (grav > 1 && isEmpty(x, y + 1)) {
+        for (let s = 1; s < grav; s++) {
+          if (isEmpty(x, y + s + 1)) continue;
+          moveCell(x, y, x, y + s); return;
+        }
+      }
       if (isEmpty(x, y + 1))         { moveCell(x, y, x, y + 1); return; }
       const dir = Math.random() < 0.5 ? -1 : 1;
       if (isEmpty(x + dir, y + 1))   { moveCell(x, y, x + dir, y + 1); return; }
@@ -1927,6 +2447,186 @@ function updateCell(x, y, cell) {
       if (isEmpty(x - gDir, y + 1)) { moveCell(x, y, x - gDir, y + 1); return; }
       if (isEmpty(x + gDir, y)) { moveCell(x, y, x + gDir, y); return; }
       if (isEmpty(x - gDir, y)) { moveCell(x, y, x - gDir, y); return; }
+      break;
+    }
+
+    // ===== TESLA COIL =====
+    case 'tesla': {
+      if (!cell.powered && checkPowerNeighbor(x, y)) {
+        cell.powered = true;
+        cell.life = 5;
+      }
+      if (cell.powered) {
+        cell.life--;
+        if (cell.life <= 0) cell.powered = false;
+        const radius = 12;
+        for (let dx = -radius; dx <= radius; dx++) {
+          for (let dy = -radius; dy <= radius; dy++) {
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > radius || dist < 1) continue;
+            if (Math.random() > 0.3) continue;
+            const nx = x + dx, ny = y + dy;
+            if (!inBounds(nx, ny)) continue;
+            const target = grid[ny][nx];
+            if (!target) continue;
+            if (target.type === 'wood' && !target.burning) {
+              target.burning = true; target.burnProgress = 0;
+            }
+            if (target.type === 'c4' || target.type === 'gunpowder' || target.type === 'uranium') {
+              target.temp = (target.temp || 0) + 200;
+            }
+            if (target.type === 'wire' && !target.powered) {
+              target.powered = true; target.life = 5;
+            }
+          }
+        }
+        // Visual lightning bolt (stored for render)
+        cell.boltAngle = (cell.boltAngle || 0) + 0.5;
+        if (Math.random() < 0.15) {
+          teslaArcs.push({ x: x, y: y, timer: 8, maxTimer: 8, seed: Math.random() * 256 });
+        }
+      }
+      break;
+    }
+
+    // ===== LIQUID NITROGEN =====
+    case 'nitro': {
+      cell.temp = -200;
+      const nDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      for (const [dx, dy] of nDirs) {
+        const n = getCell(x + dx, y + dy);
+        if (!n) continue;
+        if (n.type === 'water') {
+          setCell(x + dx, y + dy, { type: 'ice', seed: Math.random() * 256 | 0, temp: -10 });
+          return;
+        }
+        if (n.type === 'steam') {
+          setCell(x + dx, y + dy, { type: 'water', seed: Math.random() * 256 | 0, temp: 0 });
+          return;
+        }
+        if (n.type === 'lava') {
+          setCell(x + dx, y + dy, { type: 'stone', seed: Math.random() * 256 | 0, temp: 50 });
+          return;
+        }
+        if (n.type === 'fire') {
+          setCell(x + dx, y + dy, { type: 'smoke', seed: Math.random() * 256 | 0, maxLife: 20 + Math.random() * 20 | 0, life: 20 + Math.random() * 20 | 0, temp: 20 });
+          return;
+        }
+        if (n.type === 'uranium') {
+          n.temp = Math.max(0, (n.temp || 0) - 50);
+        }
+        if (n.temp && n.temp > 50) {
+          n.temp = Math.max(0, n.temp - 80);
+        }
+      }
+      // Flow like water (simplified)
+      if (isEmpty(x, y + 1)) { moveCell(x, y, x, y + 1); return; }
+      const nDir = Math.random() < 0.5 ? -1 : 1;
+      if (isEmpty(x + nDir, y + 1)) { moveCell(x, y, x + nDir, y + 1); return; }
+      if (isEmpty(x - nDir, y + 1)) { moveCell(x, y, x - nDir, y + 1); return; }
+      if (isEmpty(x + nDir, y)) { moveCell(x, y, x + nDir, y); return; }
+      if (isEmpty(x - nDir, y)) { moveCell(x, y, x - nDir, y); return; }
+      break;
+    }
+
+    // ===== ICE =====
+    case 'ice': {
+      if (cell.temp > 10) {
+        setCell(x, y, { type: 'water', seed: Math.random() * 256 | 0, temp: cell.temp });
+        return;
+      }
+      const iDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      for (const [dx, dy] of iDirs) {
+        const n = getCell(x + dx, y + dy);
+        if (n && (n.type === 'fire' || (n.temp || 0) > 100)) {
+          setCell(x, y, { type: 'water', seed: Math.random() * 256 | 0, temp: 20 });
+          return;
+        }
+      }
+      break;
+    }
+
+    // ===== METEOR =====
+    case 'meteor': {
+      // Falls very fast — checks multiple steps
+      let fallDist = 0;
+      while (fallDist < 5 && isEmpty(x, y + fallDist + 1)) fallDist++;
+      if (fallDist >= 1) {
+        moveCell(x, y, x, y + fallDist);
+        return;
+      }
+      // On impact — explode like C4
+      const R = 6;
+      for (let dx = -R; dx <= R; dx++) {
+        for (let dy = -R; dy <= R; dy++) {
+          if (dx === 0 && dy === 0) continue;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > R) continue;
+          const nx = x + dx, ny = y + dy;
+          if (!inBounds(nx, ny)) continue;
+          const t = grid[ny][nx];
+          if (t === null && Math.random() < 0.7) {
+            const life = 60 + Math.floor(Math.random() * 40);
+            setCell(nx, ny, { type: 'fire', seed: Math.random() * 256 | 0, maxLife: life, life: life, temp: 900 });
+          } else if (t !== null) {
+            t.temp = (t.temp || 0) + 500;
+            if (t.type === 'sand' || t.type === 'wood') {
+              setCell(nx, ny, { type: 'fire', seed: Math.random() * 256 | 0, maxLife: 50 + Math.random() * 40 | 0, life: 50 + Math.random() * 40 | 0, temp: 800 });
+            }
+          }
+        }
+      }
+      playExplosionSound();
+      explosionFlash.timer = 15;
+      explosionFlash.maxT = 15;
+      explosionFlash.x = x;
+      explosionFlash.y = y;
+      explosionFlash.radius = 40;
+      addShrapnel(x, y, 6, 15, 700, 30, 60);
+      blastPush(x, y, 10, 5, 0.5);
+      blastUpward(x, y, 6);
+      collapseWake(x, y, 6);
+      setCell(x, y, null);
+      return;
+    }
+
+    // ===== PORTAL BLUE (Вход) =====
+    case 'portal_blue': {
+      // Find orange portal
+      let ox = -1, oy = -1;
+      for (let py = 0; py < ROWS && ox === -1; py++) {
+        for (let px = 0; px < COLS && ox === -1; px++) {
+          const c = grid[py][px];
+          if (c && c.type === 'portal_orange') { ox = px; oy = py; }
+        }
+      }
+      if (ox === -1) break;
+      // Teleport any movable cell that enters this cell
+      const pDirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1]];
+      for (const [dx, dy] of pDirs) {
+        const nx = x + dx, ny = y + dy;
+        const c = getCell(nx, ny);
+        if (!c) continue;
+        const t = c.type;
+        if (t === 'wall' || t === 'battery' || t === 'wire' || t === 'heatwire' || t === 'switch' || t === 'led' || t === 'heater' || t === 'steamgen' || t === 'turbine' || t === 'cooler' || t === 'piston' || t === 'sensor' || t === 'portal_blue' || t === 'portal_orange' || t === 'tesla' || t === 'wood') continue;
+        if (isEmpty(ox, oy + 1)) {
+          // Teleport below orange portal
+          c.temp = (c.temp || 0) - 5;
+          grid[oy][ox] = null;
+          grid[oy + 1][ox] = c;
+          setCell(nx, ny, null);
+        } else if (isEmpty(ox, oy - 1)) {
+          grid[oy][ox] = null;
+          grid[oy - 1][ox] = c;
+          setCell(nx, ny, null);
+        }
+      }
+      break;
+    }
+
+    // ===== PORTAL ORANGE (random static) =====
+    case 'portal_orange': {
+      // Static — but apply heat to things adjacent to it (warm glow)
       break;
     }
 
@@ -2178,7 +2878,7 @@ function updateCell(x, y, cell) {
         moveCell(x, y, targetX, y);
         return;
       }
-      if (target.type !== 'wall' && target.type !== 'stone' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'heatwire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen' && target.type !== 'turbine' && target.type !== 'cooler' && target.type !== 'piston' && target.type !== 'sensor' && target.type !== 'seeds' && target.type !== 'spore') {
+      if (target.type !== 'wall' && target.type !== 'stone' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'heatwire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen' && target.type !== 'turbine' && target.type !== 'cooler' && target.type !== 'piston' && target.type !== 'sensor' && target.type !== 'seeds' && target.type !== 'spore' && target.type !== 'tesla' && target.type !== 'portal_blue' && target.type !== 'portal_orange' && target.type !== 'ice') {
         grid[y][targetX] = grid[y][x];
         grid[y][x] = target;
         return;
@@ -2194,15 +2894,24 @@ function updateCell(x, y, cell) {
       if (Math.random() < 0.15) { setCell(x, y, null); return; }
 
       const wobble = Math.random() < 0.5 ? -1 : 1;
+      // Wind drift affects horizontal movement
+      const windDrift = Math.round(windPower * 0.3);
+      const windDir = windDrift > 0 ? 1 : (windDrift < 0 ? -1 : 0);
+      const useWind = windDir !== 0 && Math.random() < Math.abs(windPower) * 0.15;
       const r = Math.random();
-      if (r < 0.55) {
+      if (r < 0.40) {
         if (isEmpty(x, y - 1))           { moveCell(x, y, x, y - 1); return; }
-      } else if (r < 0.75) {
+      } else if (r < 0.60) {
         if (isEmpty(x + wobble, y - 1))  { moveCell(x, y, x + wobble, y - 1); return; }
-      } else if (r < 0.90) {
+      } else if (r < 0.75) {
         if (isEmpty(x + wobble, y))      { moveCell(x, y, x + wobble, y); return; }
-      } else {
+      } else if (r < 0.85) {
         if (isEmpty(x - wobble, y - 1))  { moveCell(x, y, x - wobble, y - 1); return; }
+      }
+      if (useWind) {
+        const wx = x + windDir;
+        if (inBounds(wx, y) && isEmpty(wx, y)) { moveCell(x, y, wx, y); return; }
+        if (inBounds(wx, y - 1) && isEmpty(wx, y - 1)) { moveCell(x, y, wx, y - 1); return; }
       }
       if (isEmpty(x, y - 1))             { moveCell(x, y, x, y - 1); return; }
       if (isEmpty(x + wobble, y - 1))    { moveCell(x, y, x + wobble, y - 1); return; }
@@ -2320,15 +3029,23 @@ function updateCell(x, y, cell) {
       if (Math.random() < 0.10) { setCell(x, y, null); return; }
 
       const wobble = Math.random() < 0.5 ? -1 : 1;
+      const windDrift = Math.round(windPower * 0.4);
+      const windDir = windDrift > 0 ? 1 : (windDrift < 0 ? -1 : 0);
+      const useWind = windDir !== 0 && Math.random() < Math.abs(windPower) * 0.2;
       const r = Math.random();
-      if (r < 0.50) {
+      if (r < 0.40) {
         if (isEmpty(x, y - 1))           { moveCell(x, y, x, y - 1); return; }
-      } else if (r < 0.70) {
+      } else if (r < 0.60) {
         if (isEmpty(x + wobble, y - 1))  { moveCell(x, y, x + wobble, y - 1); return; }
-      } else if (r < 0.85) {
+      } else if (r < 0.75) {
         if (isEmpty(x + wobble, y))      { moveCell(x, y, x + wobble, y); return; }
-      } else {
+      } else if (r < 0.85) {
         if (isEmpty(x - wobble, y - 1))  { moveCell(x, y, x - wobble, y - 1); return; }
+      }
+      if (useWind) {
+        const wx = x + windDir;
+        if (inBounds(wx, y) && isEmpty(wx, y)) { moveCell(x, y, wx, y); return; }
+        if (inBounds(wx, y - 1) && isEmpty(wx, y - 1)) { moveCell(x, y, wx, y - 1); return; }
       }
       if (isEmpty(x, y - 1))             { moveCell(x, y, x, y - 1); return; }
       if (isEmpty(x + wobble, y - 1))    { moveCell(x, y, x + wobble, y - 1); return; }
@@ -2451,14 +3168,14 @@ function loadGridData(data) {
     var d = data[i];
     if (inBounds(d.x, d.y)) {
       var cell = { type: d.type, seed: d.seed || Math.random()*256|0, temp: d.temp || 0 };
-      if (d.type === 'battery' || d.type === 'wire' || d.type === 'heatwire' || d.type === 'switch' || d.type === 'led' || d.type === 'heater' || d.type === 'steamgen' || d.type === 'turbine' || d.type === 'piston' || d.type === 'sensor') {
+      if (d.type === 'battery' || d.type === 'wire' || d.type === 'heatwire' || d.type === 'switch' || d.type === 'led' || d.type === 'heater' || d.type === 'steamgen' || d.type === 'turbine' || d.type === 'piston' || d.type === 'sensor' || d.type === 'tesla') {
         cell.powered = !!d.powered; cell.life = d.life || 0;
       }
       if (d.type === 'switch') cell.active = !!d.active;
       if (d.type === 'piston') { cell.dir = d.dir || -1; cell.extended = !!d.extended; }
       if (d.type === 'battery') { cell.powered = true; cell.life = 5; }
       if (d.type === 'sparkler') { cell.maxLife = d.maxLife || 500; cell.life = d.life || 500; }
-      if (d.type === 'lava' || d.type === 'gasoline') { cell.life = d.life || 0; cell.maxLife = d.maxLife || 0; }
+      if (d.type === 'lava' || d.type === 'gasoline' || d.type === 'nitro') { cell.life = d.life || 0; cell.maxLife = d.maxLife || 0; }
       grid[d.y][d.x] = cell;
     }
   }
@@ -2475,7 +3192,9 @@ function connectMP() {
 
   mpWS.onopen = function() {
     mpConnected = true;
+    isHost = true;
     mpLog('Подключено к серверу', '#4f4');
+    document.getElementById('pvp-section').style.display = 'block';
   };
 
   mpWS.onmessage = function(e) {
@@ -2494,13 +3213,13 @@ function connectMP() {
           setCell(msg.cell.x, msg.cell.y, null);
         } else {
           var c = { type: msg.cell.type, seed: msg.cell.seed || Math.random()*256|0, temp: msg.cell.temp || 0 };
-          if (msg.cell.type === 'battery' || msg.cell.type === 'wire' || msg.cell.type === 'switch' || msg.cell.type === 'led' || msg.cell.type === 'heater' || msg.cell.type === 'steamgen' || msg.cell.type === 'turbine' || msg.cell.type === 'piston' || msg.cell.type === 'sensor') {
+          if (msg.cell.type === 'battery' || msg.cell.type === 'wire' || msg.cell.type === 'switch' || msg.cell.type === 'led' || msg.cell.type === 'heater' || msg.cell.type === 'steamgen' || msg.cell.type === 'turbine' || msg.cell.type === 'piston' || msg.cell.type === 'sensor' || msg.cell.type === 'tesla') {
             c.powered = !!msg.cell.powered; c.life = msg.cell.life || 0;
           }
           if (msg.cell.type === 'switch') c.active = !!msg.cell.active;
           if (msg.cell.type === 'piston') { c.dir = msg.cell.dir || -1; c.extended = !!msg.cell.extended; }
           if (msg.cell.type === 'sparkler') { c.maxLife = msg.cell.maxLife || 500; c.life = msg.cell.life || 500; }
-          if (msg.cell.type === 'lava' || msg.cell.type === 'gasoline') { c.life = msg.cell.life || 0; }
+          if (msg.cell.type === 'lava' || msg.cell.type === 'gasoline' || msg.cell.type === 'nitro') { c.life = msg.cell.life || 0; }
           setCell(msg.cell.x, msg.cell.y, c);
         }
         break;
@@ -2512,6 +3231,47 @@ function connectMP() {
       }
       case 'clear': {
         initGrid();
+        break;
+      }
+      case 'ping': {
+        pings.push({ x: msg.x, y: msg.y, emoji: msg.emoji || '⚠️', timer: 120 });
+        break;
+      }
+      case 'chat': {
+        addChat('👤 Друг', msg.text || '');
+        break;
+      }
+      case 'gravity': {
+        if (msg.gravity !== undefined) {
+          gravityFactor = msg.gravity;
+          gravSlider.value = gravityFactor * 5;
+          gravValue.textContent = gravityFactor.toFixed(1);
+        }
+        break;
+      }
+      case 'wind': {
+        if (msg.wind !== undefined) {
+          windPower = msg.wind;
+          windSlider.value = windPower;
+          windValue.textContent = windPower;
+        }
+        break;
+      }
+      case 'pvp': {
+        pvpMode = !!msg.pvp;
+        isHost = false;
+        const btn = document.getElementById('pvp-btn');
+        if (pvpMode) {
+          btn.style.borderColor = '#ff6644';
+          btn.style.color = '#ff6644';
+          btn.style.boxShadow = '0 0 10px rgba(255,100,50,0.3)';
+          btn.textContent = '⚔️ PvP ВКЛ';
+        } else {
+          btn.style.borderColor = '#442';
+          btn.style.color = '#aa6644';
+          btn.style.boxShadow = 'none';
+          btn.textContent = '⚔️ PvP ВЫКЛ';
+        }
         break;
       }
     }
@@ -2530,6 +3290,9 @@ function connectMP() {
 
 // Auto-connect on page load
 setTimeout(connectMP, 1000);
+
+// Start first mission after a short delay
+setTimeout(generateMission, 5000);
 
 // Override spawnBrushAt to sync via WebSocket
 var origSpawnBrushAt = spawnBrushAt;
@@ -2562,13 +3325,13 @@ spawnBrushAt = function(mx, my, element) {
 function sendCell(x, y, c) {
   if (!c || !c.type) return;
   var d = { x: x, y: y, type: c.type, seed: c.seed, temp: c.temp || 0 };
-  if (c.type === 'battery' || c.type === 'wire' || c.type === 'heatwire' || c.type === 'switch' || c.type === 'led' || c.type === 'heater' || c.type === 'steamgen' || c.type === 'turbine' || c.type === 'piston' || c.type === 'sensor') {
+  if (c.type === 'battery' || c.type === 'wire' || c.type === 'heatwire' || c.type === 'switch' || c.type === 'led' || c.type === 'heater' || c.type === 'steamgen' || c.type === 'turbine' || c.type === 'piston' || c.type === 'sensor' || c.type === 'tesla') {
     d.powered = !!c.powered; d.life = c.life || 0;
   }
   if (c.type === 'switch') d.active = !!c.active;
   if (c.type === 'piston') { d.dir = c.dir || -1; d.extended = !!c.extended; }
   if (c.type === 'sparkler') { d.maxLife = c.maxLife || 500; d.life = c.life || 500; }
-  if (c.type === 'lava' || c.type === 'gasoline') { d.life = c.life || 0; }
+  if (c.type === 'lava' || c.type === 'gasoline' || c.type === 'nitro') { d.life = c.life || 0; }
   sendWS({ type: 'place', cell: d });
 }
 
