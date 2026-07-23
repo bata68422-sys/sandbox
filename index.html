@@ -316,7 +316,7 @@
     </button>
   </div>
 
-  <div style="font-size:10px;color:#666;text-align:center;padding:4px;border:1px solid #1a1a2a;border-radius:4px;margin-top:2px">ЛКМ — Стереть | ПКМ — Строить</div>
+  <div style="font-size:10px;color:#666;text-align:center;padding:4px;border:1px solid #1a1a2a;border-radius:4px;margin-top:2px">ПКМ — Стереть | ЛКМ — Строить</div>
 
   <div class="tools-group">
     <label>Маркеры</label>
@@ -1402,11 +1402,11 @@ canvas.addEventListener('mousedown', (e) => {
   const { mx, my } = canvasCoords(e);
 
   if (e.button === 0) {
-    // Left click = Eraser
-    eraseAt(mx, my);
-  } else if (e.button === 2) {
-    // Right click = Build
+    // Left click = Build
     placeAtMouse2(mx, my);
+  } else if (e.button === 2) {
+    // Right click = Eraser
+    eraseAt(mx, my);
   }
   // Button 1 (middle) handled by ping listener
 });
@@ -1415,9 +1415,9 @@ canvas.addEventListener('mousemove', (e) => {
   mouseX = mx; mouseY = my;
   if (isMouseDown) {
     if (mouseButton === 0) {
-      eraseAt(mx, my);
-    } else if (mouseButton === 2) {
       placeAtMouse2(mx, my);
+    } else if (mouseButton === 2) {
+      eraseAt(mx, my);
     }
     sendWS({ type: 'cursor', x: mx, y: my });
   }
