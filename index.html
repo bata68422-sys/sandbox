@@ -2253,12 +2253,13 @@ function loadGridData(data) {
     var d = data[i];
     if (inBounds(d.x, d.y)) {
       var cell = { type: d.type, seed: d.seed || Math.random()*256|0, temp: d.temp || 0 };
-      if (d.type === 'battery' || d.type === 'wire' || d.type === 'switch' || d.type === 'led' || d.type === 'heater' || d.type === 'steamgen' || d.type === 'turbine' || d.type === 'piston' || d.type === 'sensor') {
+      if (d.type === 'battery' || d.type === 'wire' || d.type === 'heatwire' || d.type === 'switch' || d.type === 'led' || d.type === 'heater' || d.type === 'steamgen' || d.type === 'turbine' || d.type === 'piston' || d.type === 'sensor') {
         cell.powered = !!d.powered; cell.life = d.life || 0;
       }
       if (d.type === 'switch') cell.active = !!d.active;
       if (d.type === 'piston') { cell.dir = d.dir || -1; cell.extended = !!d.extended; }
       if (d.type === 'battery') { cell.powered = true; cell.life = 5; }
+      if (d.type === 'sparkler') { cell.maxLife = d.maxLife || 500; cell.life = d.life || 500; }
       grid[d.y][d.x] = cell;
     }
   }
@@ -2360,11 +2361,12 @@ spawnBrushAt = function(mx, my, element) {
 function sendCell(x, y, c) {
   if (!c || !c.type) return;
   var d = { x: x, y: y, type: c.type, seed: c.seed, temp: c.temp || 0 };
-  if (c.type === 'battery' || c.type === 'wire' || c.type === 'switch' || c.type === 'led' || c.type === 'heater' || c.type === 'steamgen' || c.type === 'turbine' || c.type === 'piston' || c.type === 'sensor') {
+  if (c.type === 'battery' || c.type === 'wire' || c.type === 'heatwire' || c.type === 'switch' || c.type === 'led' || c.type === 'heater' || c.type === 'steamgen' || c.type === 'turbine' || c.type === 'piston' || c.type === 'sensor') {
     d.powered = !!c.powered; d.life = c.life || 0;
   }
   if (c.type === 'switch') d.active = !!c.active;
   if (c.type === 'piston') { d.dir = c.dir || -1; d.extended = !!c.extended; }
+  if (c.type === 'sparkler') { d.maxLife = c.maxLife || 500; d.life = c.life || 500; }
   sendWS({ type: 'place', cell: d });
 }
 
