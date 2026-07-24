@@ -56,9 +56,22 @@ wss.on('connection', (ws) => {
       case 'cursor': {
         clients.forEach(c => {
           if (c !== ws && c.readyState === WebSocket.OPEN) {
-            c.send(JSON.stringify({ type: 'cursor', x: msg.x, y: msg.y }));
+            c.send(JSON.stringify({ type: 'cursor', x: msg.x, y: msg.y, seed: msg.seed || 0, name: msg.name || 'Friend' }));
           }
         });
+        break;
+      }
+
+      case 'ping': {
+        if (msg.t) {
+          ws.send(JSON.stringify({ type: 'pong', t: msg.t }));
+        } else {
+          clients.forEach(c => {
+            if (c !== ws && c.readyState === WebSocket.OPEN) {
+              c.send(JSON.stringify({ type: 'ping', x: msg.x, y: msg.y, emoji: msg.emoji || '⚠️' }));
+            }
+          });
+        }
         break;
       }
 
@@ -69,6 +82,50 @@ wss.on('connection', (ws) => {
             c.send(JSON.stringify({ type: 'clear' }));
           }
         });
+        break;
+      }
+
+      case 'chat': {
+        clients.forEach(c => {
+          if (c !== ws && c.readyState === WebSocket.OPEN) {
+            c.send(JSON.stringify({ type: 'chat', text: msg.text }));
+          }
+        });
+        break;
+      }
+
+      case 'gravity':
+      case 'wind': {
+        clients.forEach(c => {
+          if (c !== ws && c.readyState === WebSocket.OPEN) {
+            c.send(JSON.stringify(msg));
+          }
+        });
+        break;
+      }
+
+      case 'pvp': {
+        clients.forEach(c => {
+          if (c !== ws && c.readyState === WebSocket.OPEN) {
+            c.send(JSON.stringify({ type: 'pvp', pvp: msg.pvp }));
+          }
+        });
+        break;
+      }
+
+      case 'player_spawn':
+      case 'player_despawn':
+      case 'player_move': {
+        clients.forEach(c => {
+          if (c !== ws && c.readyState === WebSocket.OPEN) {
+            c.send(JSON.stringify(msg));
+          }
+        });
+        break;
+      }
+
+      case 'sync_request': {
+        ws.send(JSON.stringify({ type: 'sync', data: worldState }));
         break;
       }
     }
