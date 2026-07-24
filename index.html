@@ -331,6 +331,9 @@
     <button class="tool-btn" data-element="sensor" style="--glow:#99ddff">
       <span class="color-dot" style="background:#5599bb;box-shadow:0 0 8px rgba(150,220,255,0.5)"></span> Сенсор
     </button>
+    <button class="tool-btn" data-element="pipe" style="--glow:#778899">
+      <span class="color-dot" style="background:#556677;box-shadow:0 0 6px rgba(90,110,130,0.4)"></span> Труба
+    </button>
   </div>
 
   <div class="tools-group">
@@ -577,6 +580,7 @@ const ELEMENT_COLORS = {
   termite:   { r: 140, g: 80,  b: 50 },
   coral:     { r: 220, g: 100, b: 160 },
   root:      { r: 130, g: 100, b: 70 },
+  pipe:      { r: 85,  g: 110, b: 130 },
 };
 
 let selectedElement = 'sand';
@@ -736,6 +740,12 @@ function getFireColor(life, maxLife) {
 }
 
 // ----- Rendering -----
+
+function liquidColor(type) {
+  const c = ELEMENT_COLORS[type];
+  if (!c) return null;
+  return 'rgb(' + c.r + ',' + c.g + ',' + c.b + ')';
+}
 
 function drawCell(x, y, cell) {
   switch (cell.type) {
@@ -1325,6 +1335,18 @@ function drawCell(x, y, cell) {
       return false;
     }
 
+    case 'pipe': {
+      ctx.fillStyle = 'rgb(65,85,105)';
+      ctx.fillRect(x, y, 1, 1);
+      ctx.fillStyle = 'rgb(100,125,145)';
+      ctx.fillRect(x + 0.15, y + 0.15, 0.7, 0.7);
+      if (cell.contains && cell.contains.type) {
+        const c = liquidColor(cell.contains.type);
+        if (c) { ctx.fillStyle = c; ctx.fillRect(x + 0.25, y + 0.25, 0.5, 0.5); }
+      }
+      return false;
+    }
+
     default:
       return false;
   }
@@ -1744,6 +1766,9 @@ function spawnElement(x, y, type) {
     cell.temp = 20;
   } else if (type === 'termite') {
     cell.life = 300 + Math.floor(Math.random() * 200);
+  } else if (type === 'pipe') {
+    cell.contains = null;
+    cell.temp = 20;
   }
 
   grid[y][x] = cell;
@@ -2077,7 +2102,7 @@ placeAtMouse2 = function(mx, my) {
   if (!isHost) {
     const existing = getCell(cx, cy);
     if (existing) {
-      const protectedTypes = ['wall', 'wire', 'heatwire', 'switch', 'led', 'heater', 'steamgen', 'turbine', 'cooler', 'piston', 'sensor', 'tesla', 'button', 'battery', 'stone', 'glass', 'lead', 'pressure_plate', 'and_gate', 'not_gate', 'solar', 'fan', 'delay', 'pump', 'lightning_rod', 'portal_blue', 'portal_orange'];
+    const protectedTypes = ['wall', 'wire', 'heatwire', 'switch', 'led', 'heater', 'steamgen', 'turbine', 'cooler', 'piston', 'sensor', 'tesla', 'button', 'battery', 'stone', 'glass', 'lead', 'pressure_plate', 'and_gate', 'not_gate', 'solar', 'fan', 'delay', 'pump', 'lightning_rod', 'portal_blue', 'portal_orange', 'pipe'];
       if (protectedTypes.indexOf(existing.type) !== -1 && existing.hostPlaced) {
         return; // Can't modify host's protected cells
       }
@@ -3533,7 +3558,7 @@ function updateCell(x, y, cell) {
         moveCell(x, y, targetX, y);
         return;
       }
-      if (target.type !== 'wall' && target.type !== 'stone' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'heatwire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen' && target.type !== 'turbine' && target.type !== 'cooler' && target.type !== 'piston' && target.type !== 'sensor' && target.type !== 'seeds' && target.type !== 'spore' && target.type !== 'tesla' && target.type !== 'portal_blue' && target.type !== 'portal_orange' && target.type !== 'ice' && target.type !== 'glass' && target.type !== 'lead' && target.type !== 'blackhole' && target.type !== 'antigrav' && target.type !== 'pressure_plate' && target.type !== 'and_gate' && target.type !== 'not_gate' && target.type !== 'solar' && target.type !== 'fan' && target.type !== 'delay' && target.type !== 'pump' && target.type !== 'lightning_rod' && target.type !== 'button' && target.type !== 'algae' && target.type !== 'coral' && target.type !== 'root' && target.type !== 'stone') {
+      if (target.type !== 'wall' && target.type !== 'stone' && target.type !== 'wood' && target.type !== 'mover' && target.type !== 'source' && target.type !== 'c4' && target.type !== 'fuse' && target.type !== 'battery' && target.type !== 'wire' && target.type !== 'heatwire' && target.type !== 'switch' && target.type !== 'led' && target.type !== 'heater' && target.type !== 'steamgen' && target.type !== 'turbine' && target.type !== 'cooler' && target.type !== 'piston' && target.type !== 'sensor' && target.type !== 'seeds' && target.type !== 'spore' && target.type !== 'tesla' && target.type !== 'portal_blue' && target.type !== 'portal_orange' && target.type !== 'ice' && target.type !== 'glass' && target.type !== 'lead' && target.type !== 'blackhole' && target.type !== 'antigrav' && target.type !== 'pressure_plate' && target.type !== 'and_gate' && target.type !== 'not_gate' && target.type !== 'solar' && target.type !== 'fan' && target.type !== 'delay' && target.type !== 'pump' && target.type !== 'lightning_rod' && target.type !== 'button' && target.type !== 'algae' && target.type !== 'coral' && target.type !== 'root' && target.type !== 'pipe' && target.type !== 'stone') {
         grid[y][targetX] = grid[y][x];
         grid[y][x] = target;
         return;
@@ -4185,6 +4210,73 @@ function updateCell(x, y, cell) {
       }
       break;
     }
+
+    // ===== PIPE (труба для жидкостей и газов) =====
+    case 'pipe': {
+      // Fireproof, heat-insulating — do nothing with temp
+
+      // 1. Empty pipe: absorb adjacent liquids/gases
+      if (cell.contains === null || cell.contains === undefined) {
+        const absorbable = ['water','acid','oil','nitro','poison','lava','mud','gasoline','steam','smoke'];
+        const adirs = [[0,1],[1,0],[-1,0],[0,-1]];
+        // shuffle for fairness
+        for (let i = adirs.length-1; i > 0; i--) {
+          const j = Math.floor(Math.random()*(i+1));
+          const t = adirs[i]; adirs[i] = adirs[j]; adirs[j] = t;
+        }
+        for (const [dx, dy] of adirs) {
+          const n = getCell(x+dx, y+dy);
+          if (!n) continue;
+          if (absorbable.indexOf(n.type) !== -1 && Math.random() < 0.25) {
+            cell.contains = { type: n.type, seed: n.seed, temp: n.temp || 20 };
+            setCell(x+dx, y+dy, null);
+            break;
+          }
+        }
+        break;
+      }
+
+      // 2. Pipe has contents — move them with gravity
+      const inside = cell.contains;
+      const isGas = inside.type === 'steam' || inside.type === 'smoke';
+      let tryDirs = isGas
+        ? [[0,-1],[0,1],[1,0],[-1,0],[1,-1],[-1,-1]]
+        : [[0,1],[1,0],[-1,0],[0,-1],[1,1],[-1,1]];
+
+      for (const [dx, dy] of tryDirs) {
+        const nx = x+dx, ny = y+dy;
+        if (!inBounds(nx, ny)) continue;
+        const tgt = grid[ny][nx];
+
+        // Transfer to adjacent empty pipe
+        if (tgt && tgt.type === 'pipe' && tgt.contains === null) {
+          tgt.contains = { type: inside.type, seed: inside.seed, temp: inside.temp || 20 };
+          cell.contains = null;
+          break;
+        }
+
+        // Exit pipe into empty space
+        if (tgt === null) {
+          const nc = { type: inside.type, seed: inside.seed, temp: inside.temp || 20 };
+          if (inside.type === 'smoke' || inside.type === 'steam') {
+            nc.maxLife = 40 + Math.floor(Math.random()*40); nc.life = nc.maxLife;
+          }
+          if (inside.type === 'gasoline' || inside.type === 'oil') nc.temp = inside.temp || 20;
+          if (inside.type === 'lava') nc.temp = inside.temp || 800;
+          if (inside.type === 'nitro') nc.temp = -200;
+          setCell(nx, ny, nc);
+          cell.contains = null;
+          break;
+        }
+
+        // If target is same liquid type, merge (fill target pipe if adjacent)
+        if (tgt && tgt.type === 'pipe' && tgt.contains && tgt.contains.type === inside.type) {
+          // already contains same liquid — skip to avoid merging issues
+          continue;
+        }
+      }
+      break;
+    }
   }
 }
 
@@ -4415,7 +4507,7 @@ function getGridData() {
         data.push({ x: x, y: y, type: c.type, seed: c.seed, temp: c.temp || 0,
           powered: !!c.powered, life: c.life || 0, active: !!c.active,
           dir: c.dir || 0, extended: !!c.extended, lit: !!c.lit, burning: !!c.burning,
-          pressure: c.pressure || 0 });
+          pressure: c.pressure || 0, contains: c.contains || null });
       }
     }
   }
@@ -4427,7 +4519,7 @@ function loadGridData(data) {
     if (inBounds(d.x, d.y)) {
       var cell = { type: d.type, seed: d.seed || Math.random()*256|0, temp: d.temp || 0 };
       if (!isHost) {
-        const prot = ['wall','wire','heatwire','switch','led','heater','steamgen','turbine','cooler','piston','sensor','tesla','button','battery','stone','glass','lead','pressure_plate','and_gate','not_gate','solar','fan','delay','pump','lightning_rod','portal_blue','portal_orange'];
+        const prot = ['wall','wire','heatwire','switch','led','heater','steamgen','turbine','cooler','piston','sensor','tesla','button','battery','stone','glass','lead','pressure_plate','and_gate','not_gate','solar','fan','delay','pump','lightning_rod','portal_blue','portal_orange','pipe'];
         if (prot.indexOf(d.type) !== -1) cell.hostPlaced = true;
       }
       if (d.type === 'battery' || d.type === 'wire' || d.type === 'heatwire' || d.type === 'switch' || d.type === 'led' || d.type === 'heater' || d.type === 'steamgen' || d.type === 'turbine' || d.type === 'piston' || d.type === 'sensor' || d.type === 'tesla' || d.type === 'button' || d.type === 'pressure_plate' || d.type === 'and_gate' || d.type === 'not_gate' || d.type === 'solar' || d.type === 'fan' || d.type === 'delay' || d.type === 'pump' || d.type === 'lightning_rod') {
@@ -4440,6 +4532,9 @@ function loadGridData(data) {
       if (d.type === 'sparkler') { cell.maxLife = d.maxLife || 500; cell.life = d.life || 500; }
       if (d.type === 'lava' || d.type === 'gasoline' || d.type === 'nitro' || d.type === 'oil' || d.type === 'firefly' || d.type === 'termite' || d.type === 'acidgas') { cell.life = d.life || 0; cell.maxLife = d.maxLife || 0; }
       if (d.type === 'delay') { cell.timer = d.timer || 0; }
+      if (d.type === 'pipe' && d.contains) {
+        cell.contains = { type: d.contains.type, seed: d.contains.seed || 0, temp: d.contains.temp || 20 };
+      }
       grid[d.y][d.x] = cell;
     }
   }
@@ -4489,7 +4584,7 @@ function connectMP() {
         } else {
           var c = { type: msg.cell.type, seed: msg.cell.seed || Math.random()*256|0, temp: msg.cell.temp || 0 };
           if (!isHost) {
-            const prot = ['wall','wire','heatwire','switch','led','heater','steamgen','turbine','cooler','piston','sensor','tesla','button','battery','stone','glass','lead','pressure_plate','and_gate','not_gate','solar','fan','delay','pump','lightning_rod','portal_blue','portal_orange'];
+            const prot = ['wall','wire','heatwire','switch','led','heater','steamgen','turbine','cooler','piston','sensor','tesla','button','battery','stone','glass','lead','pressure_plate','and_gate','not_gate','solar','fan','delay','pump','lightning_rod','portal_blue','portal_orange','pipe'];
             if (prot.indexOf(msg.cell.type) !== -1) c.hostPlaced = true;
           }
           if (msg.cell.type === 'battery' || msg.cell.type === 'wire' || msg.cell.type === 'switch' || msg.cell.type === 'led' || msg.cell.type === 'heater' || msg.cell.type === 'steamgen' || msg.cell.type === 'turbine' || msg.cell.type === 'piston' || msg.cell.type === 'sensor' || msg.cell.type === 'tesla' || msg.cell.type === 'button' || msg.cell.type === 'pressure_plate' || msg.cell.type === 'and_gate' || msg.cell.type === 'not_gate' || msg.cell.type === 'solar' || msg.cell.type === 'fan' || msg.cell.type === 'delay' || msg.cell.type === 'pump' || msg.cell.type === 'lightning_rod') {
@@ -4501,6 +4596,9 @@ function connectMP() {
           if (msg.cell.type === 'sparkler') { c.maxLife = msg.cell.maxLife || 500; c.life = msg.cell.life || 500; }
           if (msg.cell.type === 'lava' || msg.cell.type === 'gasoline' || msg.cell.type === 'nitro' || msg.cell.type === 'oil' || msg.cell.type === 'firefly' || msg.cell.type === 'termite' || msg.cell.type === 'acidgas') { c.life = msg.cell.life || 0; c.maxLife = msg.cell.maxLife || 0; }
           if (msg.cell.type === 'delay') { c.timer = msg.cell.timer || 0; }
+          if (msg.cell.type === 'pipe' && msg.cell.contains) {
+            c.contains = { type: msg.cell.contains.type, seed: msg.cell.contains.seed || 0, temp: msg.cell.contains.temp || 20 };
+          }
           setCell(msg.cell.x, msg.cell.y, c);
         }
         break;
@@ -4642,6 +4740,7 @@ function sendCell(x, y, c) {
   if (c.type === 'sparkler') { d.maxLife = c.maxLife || 500; d.life = c.life || 500; }
   if (c.type === 'lava' || c.type === 'gasoline' || c.type === 'nitro' || c.type === 'oil' || c.type === 'firefly' || c.type === 'termite' || c.type === 'acidgas') { d.life = c.life || 0; d.maxLife = c.maxLife || 0; }
   if (c.type === 'delay') { d.timer = c.timer || 0; }
+  if (c.type === 'pipe' && c.contains) { d.contains = c.contains; }
   sendWS({ type: 'place', cell: d });
 }
 
