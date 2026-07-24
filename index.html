@@ -7,7 +7,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0a0a12;
+    background: #06060e;
     display: flex;
     height: 100vh;
     overflow: hidden;
@@ -21,70 +21,82 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: #070714;
+    background: radial-gradient(ellipse at center, #0a0a20 0%, #060610 50%, #02020a 100%);
   }
   canvas {
     display: block;
     image-rendering: pixelated;
     cursor: crosshair;
+    box-shadow: 0 0 60px rgba(40,60,120,0.15), inset 0 0 40px rgba(0,0,0,0.3);
+    border-radius: 2px;
   }
 
   #panel {
     width: 180px;
     flex-shrink: 0;
-    background: #0d0d1a;
+    background: rgba(15,15,25,0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 16px 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    border-left: 2px solid #1a1a3a;
+    border-left: 1px solid rgba(60,60,120,0.3);
     overflow-y: auto;
     user-select: none;
   }
   #panel h2 {
     font-size: 14px;
     text-align: center;
-    color: #5555aa;
+    color: #6677bb;
     letter-spacing: 3px;
     margin-bottom: 8px;
     text-transform: uppercase;
-    text-shadow: 0 0 12px rgba(80,80,200,0.3);
+    text-shadow: 0 0 16px rgba(80,100,220,0.4);
   }
   .tools-group { display: flex; flex-direction: column; gap: 4px; }
   .tools-group label {
     font-size: 11px;
-    color: #555;
+    color: #556;
     text-transform: uppercase;
     letter-spacing: 1px;
+    text-shadow: 0 0 4px rgba(80,80,160,0.15);
   }
   .tool-btn {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 8px 10px;
-    background: #12122a;
-    border: 1px solid #222244;
+    background: rgba(18,18,35,0.7);
+    border: 1px solid rgba(40,40,80,0.4);
     border-radius: 6px;
     color: #999;
     font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s ease;
     box-shadow: 0 0 4px transparent;
+    backdrop-filter: blur(4px);
   }
   .tool-btn:hover {
-    background: #1a1a3a;
-    border-color: #4444aa;
-    box-shadow: 0 0 12px rgba(100,100,255,0.15);
-    color: #ccc;
+    background: rgba(28,28,50,0.8);
+    border-color: rgba(100,100,200,0.5);
+    box-shadow: 0 0 16px rgba(100,100,255,0.12), inset 0 0 8px rgba(100,100,255,0.05);
+    color: #ddd;
   }
   .tool-btn.active {
     color: #fff;
-    border-color: #6666ff;
+    border-color: var(--glow, rgba(100,100,200,0.7));
+    box-shadow: 0 0 18px var(--glow, rgba(100,100,200,0.2)), inset 0 0 6px rgba(255,255,255,0.03);
   }
   .tool-btn .color-dot {
     width: 18px; height: 18px; border-radius: 4px;
     flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.12);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .tool-btn:hover .color-dot {
+    transform: scale(1.12);
+    box-shadow: 0 0 8px currentColor;
   }
   #brush-group { margin-top: 4px; }
   #brush-group input[type=range],
@@ -92,7 +104,7 @@
     width: 100%;
     -webkit-appearance: none;
     appearance: none;
-    background: #12122a;
+    background: rgba(18,18,35,0.6);
     height: 6px;
     border-radius: 3px;
     outline: none;
@@ -102,55 +114,60 @@
     -webkit-appearance: none;
     width: 16px; height: 16px;
     border-radius: 50%;
-    background: #6666ff;
+    background: #6677cc;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(100,100,255,0.4);
+    box-shadow: 0 0 12px rgba(80,100,200,0.5);
   }
   #brush-value, #speed-value {
-    font-size: 13px; color: #5555aa; text-align: center;
+    font-size: 13px; color: #6677bb; text-align: center;
+    text-shadow: 0 0 6px rgba(80,100,200,0.2);
   }
   #clear-btn {
     padding: 10px;
-    background: #1a0a0a;
-    border: 1px solid #442222;
+    background: rgba(26,10,10,0.7);
+    border: 1px solid rgba(80,30,30,0.5);
     border-radius: 6px;
-    color: #aa4444;
+    color: #aa5555;
     font-size: 13px;
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-top: auto;
-    transition: all 0.2s;
+    transition: all 0.25s ease;
     box-shadow: 0 0 4px transparent;
+    backdrop-filter: blur(4px);
   }
   #clear-btn:hover {
-    background: #2a1010;
-    border-color: #663333;
-    color: #dd6666;
-    box-shadow: 0 0 16px rgba(200,50,50,0.2);
+    background: rgba(40,16,16,0.8);
+    border-color: rgba(120,50,50,0.7);
+    color: #dd7777;
+    box-shadow: 0 0 20px rgba(200,50,50,0.2), inset 0 0 8px rgba(200,50,50,0.05);
   }
   #fps-counter {
     font-size: 11px;
-    color: #444;
+    color: rgba(70,70,100,0.7);
     text-align: center;
     margin-top: 4px;
+    text-shadow: 0 0 4px rgba(60,60,120,0.15);
   }
   #thermo-display {
     position: fixed; bottom: 10px; left: 10px;
-    font-size: 12px; color: #ff8833;
-    background: rgba(10,10,20,0.8);
-    padding: 4px 10px; border-radius: 4px;
-    border: 1px solid #2a2a3a;
+    font-size: 12px; color: #ff9944;
+    background: rgba(10,10,22,0.85);
+    backdrop-filter: blur(6px);
+    padding: 5px 12px; border-radius: 6px;
+    border: 1px solid rgba(60,50,30,0.4);
     pointer-events: none; z-index: 100;
     font-family: 'Segoe UI', monospace;
     display: none;
+    text-shadow: 0 0 6px rgba(255,150,60,0.2);
   }
 
   #chat-container::-webkit-scrollbar { width: 4px; }
-  #chat-container::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
+  #chat-container::-webkit-scrollbar-thumb { background: rgba(40,40,80,0.5); border-radius: 2px; }
   #chat-log div { line-height: 1.4; }
-  .ping-btn:hover { border-color: #6666ff; box-shadow: 0 0 8px rgba(100,100,255,0.2); }
-  .ping-btn.active { border-color: #ffcc00; box-shadow: 0 0 12px rgba(255,200,0,0.3); }
+  .ping-btn:hover { border-color: rgba(100,100,200,0.5); box-shadow: 0 0 10px rgba(100,100,255,0.15); }
+  .ping-btn.active { border-color: #ffcc00; box-shadow: 0 0 16px rgba(255,200,0,0.3); }
   #mission-banner { transition: opacity 0.5s; }
   #ping-dot { transition: color 0.3s; }
 
@@ -160,9 +177,10 @@
       width: 100%; height: 120px;
       flex-direction: row; flex-wrap: wrap;
       padding: 8px; gap: 4px;
-      border-left: none; border-top: 2px solid #1a1a3a;
+      border-left: none; border-top: 1px solid rgba(60,60,120,0.3);
       align-content: flex-start;
       overflow-y: visible;
+      backdrop-filter: blur(6px);
     }
     #panel h2 { display: none; }
     .tools-group { flex-direction: row; flex-wrap: wrap; }
@@ -599,6 +617,7 @@ let pvpMode = false;
 let isHost = true;
 let selectedPing = '⚠️';
 let pings = [];
+let particles = [];
 let selectMode = false;
 let selectStart = null;
 let selectEnd = null;
@@ -751,7 +770,7 @@ function drawCell(x, y, cell) {
   switch (cell.type) {
 
     case 'sand': {
-      const v = (cell.seed / 255 - 0.5) * 35;
+      const v = (cell.seed / 255 - 0.5) * 45;
       ctx.fillStyle = `rgb(${212 + v|0}, ${168 + v * 0.6|0}, ${67 + v * 0.4|0})`;
       ctx.fillRect(x, y, 1, 1);
       return false;
@@ -778,15 +797,20 @@ function drawCell(x, y, cell) {
 
     case 'acid': {
       const v = (cell.seed / 255 - 0.5) * 25;
-      ctx.fillStyle = `rgb(${102 + v|0}, ${221 + v * 0.6|0}, ${51 + v * 0.3|0})`;
+      ctx.fillStyle = `rgba(${102 + v|0}, ${221 + v * 0.6|0}, ${51 + v * 0.3|0},0.65)`;
       ctx.fillRect(x, y, 1, 1);
       return true;
     }
 
     case 'fire': {
       const fc = getFireColor(cell.life, cell.maxLife);
+      const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 100 + cell.seed);
+      ctx.save();
+      ctx.shadowBlur = 18 * pulse;
+      ctx.shadowColor = 'rgba(255,130,50,0.8)';
       ctx.fillStyle = `rgb(${fc.r},${fc.g},${fc.b})`;
       ctx.fillRect(x, y, 1, 1);
+      ctx.restore();
       return true;
     }
 
@@ -851,13 +875,13 @@ function drawCell(x, y, cell) {
     }
 
     case 'uranium': {
+      const seedV = (cell.seed / 255 - 0.5) * 10;
       const pulse = Math.sin(Date.now() * 0.003 + cell.seed * 2) * 15;
       const t = cell.temp || 0;
 
-      // Base neon green; shifts toward yellow → orange as temp rises
-      let r = 40, g = 210, b = 40;
+      let r = 40 + seedV, g = 210 + seedV * 0.5, b = 40 + seedV * 0.3;
       if (t > 50) {
-        const heat = Math.min((t - 50) / 100, 1); // 0→1 as temp goes 50→150
+        const heat = Math.min((t - 50) / 100, 1);
         r = 40 + (220 - 40) * heat;
         g = 210 - (210 - 100) * heat;
         b = 40 * (1 - heat * 0.8);
@@ -865,8 +889,13 @@ function drawCell(x, y, cell) {
       r += pulse * 0.3;
       g += pulse * 0.2;
 
+      ctx.save();
+      const gp = 0.75 + 0.25 * Math.sin(Date.now() / 90 + cell.seed * 3);
+      ctx.shadowBlur = 14 * gp;
+      ctx.shadowColor = `rgba(${r*0.3|0},${g*0.8|0},${b*0.3|0},0.7)`;
       ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
       ctx.fillRect(x, y, 1, 1);
+      ctx.restore();
       return true;
     }
 
@@ -973,11 +1002,16 @@ function drawCell(x, y, cell) {
         const r = 150 + 105 * t;
         const g = 150 + 105 * t;
         const b = 100 + 155 * t;
+        ctx.save();
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = `rgba(${r|0},${g|0},${b|0},0.6)`;
         ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+        ctx.fillRect(x, y, 1, 1);
+        ctx.restore();
       } else {
         ctx.fillStyle = '#554422';
+        ctx.fillRect(x, y, 1, 1);
       }
-      ctx.fillRect(x, y, 1, 1);
       return !!cell.powered;
     }
 
@@ -1000,11 +1034,16 @@ function drawCell(x, y, cell) {
       const r = 65 + v, g = 95 + v * 0.7, b = 135 + v * 0.5;
       if (cell.powered) {
         const t = Math.min(1, (cell.life || 0) / 5);
+        ctx.save();
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = `rgba(60,200,255,0.6)`;
         ctx.fillStyle = `rgb(${r|0}, ${g + 80 * t|0}, ${b + 100 * t|0})`;
+        ctx.fillRect(x, y, 1, 1);
+        ctx.restore();
       } else {
         ctx.fillStyle = `rgb(${r|0}, ${g|0}, ${b|0})`;
+        ctx.fillRect(x, y, 1, 1);
       }
-      ctx.fillRect(x, y, 1, 1);
       return !!cell.powered;
     }
 
@@ -1104,8 +1143,13 @@ function drawCell(x, y, cell) {
       const g = 60 + pulse * 0.5;
       const b = 10;
       const heat = heatBlend(r, g, b, cell.temp || 1000);
+      ctx.save();
+      const glowPulse = 0.8 + 0.2 * Math.sin(Date.now() / 120 + cell.seed * 2);
+      ctx.shadowBlur = 16 * glowPulse;
+      ctx.shadowColor = 'rgba(255,60,10,0.7)';
       ctx.fillStyle = heat || `rgb(${r|0},${g|0},${b|0})`;
       ctx.fillRect(x, y, 1, 1);
+      ctx.restore();
       return true;
     }
 
@@ -1123,6 +1167,16 @@ function drawCell(x, y, cell) {
       const r = 60 + glow * 0.4 + v;
       const g = 100 + glow * 0.5 + v;
       const b = 180 + glow * 0.6;
+      if (cell.powered) {
+        ctx.save();
+        const gp = 0.7 + 0.3 * Math.sin(Date.now() / 80 + cell.seed);
+        ctx.shadowBlur = 20 * gp;
+        ctx.shadowColor = 'rgba(100,180,255,0.7)';
+        ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+        ctx.fillRect(x, y, 1, 1);
+        ctx.restore();
+        return true;
+      }
       ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
       ctx.fillRect(x, y, 1, 1);
       return !!cell.powered;
@@ -1353,12 +1407,21 @@ function drawCell(x, y, cell) {
 }
 
 function render() {
-  const grad = ctx.createLinearGradient(0, 0, 0, ROWS);
-  grad.addColorStop(0, '#070714');
-  grad.addColorStop(0.4, '#0a0a1e');
-  grad.addColorStop(0.7, '#080818');
-  grad.addColorStop(1, '#04040a');
-  ctx.fillStyle = grad;
+  // Cinematic radial background with vignette
+  const bgGrad = ctx.createRadialGradient(COLS/2, ROWS/2.5, 0, COLS/2, ROWS/2, COLS*0.7);
+  bgGrad.addColorStop(0, '#0e0e24');
+  bgGrad.addColorStop(0.3, '#0a0a1a');
+  bgGrad.addColorStop(0.6, '#060612');
+  bgGrad.addColorStop(1, '#020208');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, COLS, ROWS);
+  // Vignette overlay
+  const vigGrad = ctx.createRadialGradient(COLS/2, ROWS/2, COLS*0.2, COLS/2, ROWS/2, COLS*0.8);
+  vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  vigGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
+  vigGrad.addColorStop(0.8, 'rgba(0,0,8,0.3)');
+  vigGrad.addColorStop(1, 'rgba(0,0,12,0.6)');
+  ctx.fillStyle = vigGrad;
   ctx.fillRect(0, 0, COLS, ROWS);
 
   gctx.clearRect(0, 0, COLS, ROWS);
@@ -1461,6 +1524,27 @@ function render() {
   ctx.drawImage(glowCanvas, 0, 0);
   ctx.restore();
 
+  // Visual particles (splash, sparks)
+  for (let pi = particles.length - 1; pi >= 0; pi--) {
+    const p = particles[pi];
+    p.life--;
+    if (p.life <= 0) { particles.splice(pi, 1); continue; }
+    const frac = p.life / p.maxLife;
+    p.x += p.vx * 0.5;
+    p.y += p.vy * 0.5;
+    p.vy += 0.05; // gravity
+    if (p.x < 0 || p.x >= COLS || p.y < 0 || p.y >= ROWS) { particles.splice(pi, 1); continue; }
+    ctx.save();
+    ctx.shadowBlur = 6 * frac;
+    ctx.shadowColor = p.color.replace('1)', `${0.3 * frac})`);
+    ctx.globalAlpha = frac * 0.8;
+    ctx.fillStyle = p.color;
+    const size = Math.max(0.5, p.size * frac);
+    ctx.fillRect(p.x - size/2, p.y - size/2, size, size);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+
   // Explosion flash overlay
   if (explosionFlash.timer > 0) {
     const t = explosionFlash.timer;
@@ -1514,6 +1598,7 @@ function render() {
   }
 
   // Tesla arcs & shocker arcs
+  const arcPulse = 0.7 + 0.3 * Math.sin(Date.now() / 80);
   for (let ai = teslaArcs.length - 1; ai >= 0; ai--) {
     const arc = teslaArcs[ai];
     arc.timer--;
@@ -1524,10 +1609,10 @@ function render() {
       // Point-to-point zigzag arc (shocker)
       const segs = arc.segments || 4;
       ctx.save();
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = 'rgba(0,200,255,0.6)';
+      ctx.shadowBlur = 16 * arcPulse;
+      ctx.shadowColor = 'rgba(60,200,255,0.7)';
       ctx.strokeStyle = `rgba(150,220,255,${0.5 + 0.4 * intensity})`;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.5 + 0.5 * arcPulse;
       ctx.beginPath();
       ctx.moveTo(arc.x1, arc.y1);
       for (let s = 0; s <= segs; s++) {
@@ -1547,8 +1632,8 @@ function render() {
         const len = 4 + (arc.seed % 8);
         let lx = arc.x, ly = arc.y;
         ctx.save();
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = 'rgba(100,180,255,0.5)';
+        ctx.shadowBlur = 14 * arcPulse;
+        ctx.shadowColor = 'rgba(100,200,255,0.6)';
         for (let d = 0; d < len; d++) {
           const nx = lx + Math.round(Math.cos(angle + d * 0.3) * (1 + Math.random() * 0.5));
           const ny = ly + Math.round(Math.sin(angle + d * 0.3) * (1 + Math.random() * 0.5));
@@ -3066,6 +3151,10 @@ function updateCell(x, y, cell) {
 
       // Desperate upward push if very high pressure
       if (pressure >= 10 && isEmpty(x, y - 1)) { moveCell(x, y, x, y - 1); return; }
+      // Splash: if water just landed on a solid
+      if (!isEmpty(x, y + 1) && isEmpty(x, y - 1) && grid[y + 1][x] && grid[y + 1][x].type !== 'water' && Math.random() < 0.15) {
+        spawnParticles(x, y, 'rgba(80,180,255,1)', 2, 0.8);
+      }
       break;
     }
 
@@ -3516,6 +3605,10 @@ function updateCell(x, y, cell) {
       if (cell.burning) {
         cell.burnProgress += 1.2;
         if (Math.random() < 0.01) playSpawnSound();
+        // Emit sparks
+        if (cell.burnProgress > 20 && Math.random() < 0.08) {
+          spawnParticles(x, y, 'rgba(255,180,60,1)', 1, 1.5);
+        }
         if (cell.burnProgress >= 100) {
           setCell(x, y, {
             type: 'fire',
@@ -4452,6 +4545,24 @@ function gameLoop(timestamp) {
   if (player && !paused) updatePlayer();
   render();
   requestAnimationFrame(gameLoop);
+}
+
+// ----- Visual Particles -----
+function spawnParticles(x, y, color, count, spread) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.3 + Math.random() * spread;
+    particles.push({
+      x: x + (Math.random() - 0.5) * 0.5,
+      y: y + (Math.random() - 0.5) * 0.5,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 0.5,
+      color: color,
+      size: 1 + Math.random() * 1.5,
+      life: 6 + Math.floor(Math.random() * 8),
+      maxLife: 14,
+    });
+  }
 }
 
 // ----- Sound Effects (Web Audio) -----
